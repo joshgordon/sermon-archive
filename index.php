@@ -2,7 +2,7 @@
 <?php require_once('getid3/getid3.php'); 
 $getID3 = new getID3; 
 ?> 
-<?php $sdir = "/data/sermons/"; ?> 
+<?php $sdir = "/data/spep/spepmedia.com/"; ?> 
 <?php
 //ini_set('display_errors', 1);
 //error_reporting(~0);
@@ -52,7 +52,7 @@ foreach ($chunks as $i => $chunk) {
 }
   
 //Scan the directory for items. 
-$items=scandir("/data/sermons" . $path); 
+$items=scandir($sdir . $path); 
 
 
 $allDirs=true; 
