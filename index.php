@@ -19,6 +19,8 @@ $getID3 = new getID3;
 <!-- Optional theme -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
 
+<link rel="stylesheet" href="/sticky-footer.css" /> 
+
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
@@ -150,6 +152,11 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
 </div>
 
 </div>
+</div> 
+<div class="footer"> 
+  <div class="container"> 
+    <p class="text-muted"><a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> :: Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> :: <a href="http://validator.w3.org/check?uri=archive.spepmedia.com">Valid XHTML</a></p>
+  </div>
 </div> 
 </body>
 </html>
