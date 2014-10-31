@@ -116,15 +116,27 @@ foreach($items as $item) {
 <?php
 if ($allDirs) { $inc=2; } else { $inc = 1; } 
 for ($i = 0; $i < count($items); $i+=$inc ) { 
-  if ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md") {
-    continue; 
+  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md") {
+    $i+=1;
   }
+  if ($i+1 >= count($items)) { 
+    break; 
+  } 
 if (is_dir($sdir . $path . "/" . $items[$i])) { 
   ?>
     <tr>
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
       <td><?php echo "<a href=\"$path/" . $items[$i] . "\">" . $items[$i] . "</a>"; ?> </td>
-      <?php if ($allDirs) { if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <?php if ($allDirs) { 
+          while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md") {
+            $i+=1;
+            echo "Foobar: $i : " . count($items); 
+          }
+          if ($i >= count($items)) { 
+            break; 
+          } 
+
+          if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
                                 <td><?php echo "<a href=\"$path/" . $items[$i+1] . "\">" . $items[$i+1] . "</a>"; ?> </td> 
       <?php } else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }} else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }  ?> </tr> <?php
   } else { 
