@@ -119,7 +119,7 @@ for ($i = 0; $i < count($items); $i+=$inc ) {
   while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md") {
     $i+=1;
   }
-  if ($i+1 >= count($items)) { 
+  if ($i >= count($items)) { 
     break; 
   } 
 if (is_dir($sdir . $path . "/" . $items[$i])) { 
