@@ -19,7 +19,7 @@ $getID3 = new getID3;
 <!-- Optional theme -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
 
-<link rel="stylesheet" href="/sticky-footer.css" /> 
+<link rel="stylesheet" href="/style.css" /> 
 
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -59,17 +59,19 @@ $items=scandir($sdir . $path);
 
 $allDirs=true; 
 $readme=false; 
+$featured=false; 
 
 if (count($items) < 6) { $allDirs=false; } 
 //Look to see if the path is only directories
 foreach($items as $item) { 
   if ($item == "readme.md") { 
     $readme=true; 
+  } else if ($item == "featured.csv") { 
+    $featured = true; 
     continue; 
   }
-  if (!is_dir($sdir . $path . "/" . $item) && $allDirs) { 
+  else if (!is_dir($sdir . $path . "/" . $item) && $allDirs) { 
     $allDirs=false; 
-    continue; 
   }
 }
 
@@ -97,8 +99,32 @@ foreach($items as $item) {
 </div>
 </div>
 </div> 
+<?php } if ($path == "" && $featured) { 
+$featured = array_map('str_getcsv', file($sdir . "/featured.csv")); 
+?> 
+<div class="row">
+  <div class="col-md-8 col-md-offset-2"> 
+  <h3>Featured</h3>
+<?php 
+foreach ($featured as $feature) { 
+  if ($feature[0] == "title" || $feature[0] == "") 
+    continue; 
+  
+?> 
+   <div class="cover">
+      <a href="<?php echo $feature[1]; ?>">
+      <img src="<?php echo $feature[2]; ?>" width="100%" height="100%" alt="<?php echo $feature[0]; ?>" />
+      <div class="info">
+        <?php echo $feature[0]; ?>
+      </div>
+    </a>
+  </div>
+<?php } ?>
 
-<?php } ?> 
+  </div>
+</div>
+
+<?php } ?>
 
 <div class="row">
 
@@ -116,7 +142,7 @@ foreach($items as $item) {
 <?php
 if ($allDirs) { $inc=2; } else { $inc = 1; } 
 for ($i = 0; $i < count($items); $i+=$inc ) { 
-  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md") {
+  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv") {
     $i+=1;
   }
   if ($i >= count($items)) { 
@@ -128,7 +154,7 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
       <td><?php echo "<a href=\"$path/" . $items[$i] . "\">" . $items[$i] . "</a>"; ?> </td>
       <?php if ($allDirs) { 
-          while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md") {
+          while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv") {
             $i+=1;
             echo "Foobar: $i : " . count($items); 
           }
