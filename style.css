@@ -54,14 +54,27 @@ body {
 }
 
 .info { 
+  color: #000; 
   background-color: #fff; 
-  background-color: rgba(255, 255, 255, .5); 
+  background-color: rgba(255, 255, 255, .7); 
   position: absolute; 
-  top: 0; 
   left: 0; 
   right: 0; 
-  padding: 5px; 
-  border-bottom: 1px solid #000; 
-  font-size: 16px; 
+  padding: 3px; 
   text-align: left; 
+  text-shadow: 2px 2px 1px #fff; 
 }
+.title { 
+  top:0; 
+  border-bottom: 1px solid #000; 
+  font-size: 15px; 
+}
+.pastor { 
+  padding: 1px; 
+  padding-left: 3px; 
+  padding-right: 3px; 
+  bottom: 0; 
+  border-top: 1px solid #000; 
+  font-size: 10px; 
+}
+  

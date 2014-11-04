@@ -19,13 +19,14 @@ $getID3 = new getID3;
 <!-- Optional theme -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
 
-<link rel="stylesheet" href="/style.css" /> 
 
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 
 <!-- Latest compiled and minified JavaScript -->
 <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+<link rel="stylesheet" href="/style.css" /> 
 
 </head>
 <body>
@@ -114,9 +115,12 @@ foreach ($featured as $feature) {
    <div class="cover">
       <a href="<?php echo $feature[1]; ?>">
       <img src="<?php echo $feature[2]; ?>" width="100%" height="100%" alt="<?php echo $feature[0]; ?>" />
-      <div class="info">
+      <div class="info title">
         <?php echo $feature[0]; ?>
       </div>
+      <div class="info pastor"> 
+        <?php echo $feature[3]; ?> 
+      </div> 
     </a>
   </div>
 <?php } ?>
