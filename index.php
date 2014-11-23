@@ -1,5 +1,18 @@
 <?php //include "config.php"; ?> 
-<?php require_once('getid3/getid3.php'); 
+
+
+<?php 
+
+function cleanURL($url) { 
+  $array = explode('/', $url);
+  $newArray = array(); 
+  foreach ($array as $value) { 
+    if ($value == "") { continue; } 
+    $newArray[] = rawurlencode($value); 
+  }
+  return implode('/', $newArray); 
+}
+require_once('getid3/getid3.php'); 
 $getID3 = new getID3; 
 ?> 
 <?php $sdir = "/data/spep/spepmedia.com/"; ?> 
@@ -60,7 +73,7 @@ foreach ($chunks as $i => $chunk) {
     //Print out the breadcrumb trail.
     $output[] = sprintf(
         '<a href="%s">%s</a>',
-        implode('/', array_slice($chunks, 0, $i + 1)),
+        implode('/', array_slice(array_map('cleanURL', $chunks), 0, $i + 1)),
         $chunk
     );
 }
@@ -124,7 +137,7 @@ foreach ($featured as $feature) {
   
 ?> 
    <div class="cover">
-      <a href="<?php echo $feature[1]; ?>">
+      <a href="<?php echo cleanURL($feature[1]); ?>">
       <img src="<?php echo $feature[2]; ?>" width="100%" height="100%" alt="<?php echo $feature[0]; ?>" />
       <div class="info title">
         <?php echo $feature[0]; ?>
@@ -167,7 +180,7 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
   ?>
     <tr>
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
-      <td><?php echo "<a href=\"$path/" . $items[$i] . "\">" . $items[$i] . "</a>"; ?> </td>
+      <td><?php echo "<a href=\"".cleanURL($path)."/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
       <?php if ($allDirs) { 
           while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv") {
             $i+=1;
@@ -178,7 +191,7 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
           } 
 
           if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
-                                <td><?php echo "<a href=\"$path/" . $items[$i+1] . "\">" . $items[$i+1] . "</a>"; ?> </td> 
+                                <td><?php echo "<a href=\"".cleanURL($path)."/" . cleanURL($items[$i+1]) . "\">" . $items[$i+1] . "</a>"; ?> </td> 
       <?php } else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }} else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }  ?> </tr> <?php
   } else { 
   $file = $sdir . $path . "/" . $items[$i]; 
@@ -191,9 +204,9 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
   <tr>
     <td><span class="glyphicon glyphicon-play"></span></td>
     <td><?php if ($info != null && array_key_exists(0, $info['tags']['id3v2']['title'])) { 
-      echo "<a href=\"/sermons" . $path . "/" . $items[$i] . "\">" . $info['tags']['id3v2']['title'][0] . "</a>"; 
+      echo "<a href=\"/sermons/" . cleanURL($path) . "/" . cleanURL($items[$i]) . "\">" . $info['tags']['id3v2']['title'][0] . "</a>"; 
     } else { 
-      echo "<a href=\"/sermons" . $path . "/" . $items[$i] . "\">" . $items[$i] . "</a>"; } ?> </td>
+      echo "<a href=\"/sermons" . cleanURL($path) . "/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; } ?> </td>
     <td><?php echo $info['tags']['id3v2']['comment'][0]; ?> </td>
     <td><?php echo $info['tags']['id3v2']['artist'][0]; ?></td>
   </tr> 
