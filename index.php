@@ -1,8 +1,6 @@
 <?php //include "config.php"; ?> 
 
-
-<?php 
-
+<?php
 function cleanURL($url) { 
   $array = explode('/', $url);
   $newArray = array(); 
@@ -180,7 +178,7 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
   ?>
     <tr>
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
-      <td><?php echo "<a href=\"".cleanURL($path)."/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
+      <td><?php echo "<a href=\"/".cleanURL($path)."/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
       <?php if ($allDirs) { 
           while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv") {
             $i+=1;
@@ -226,3 +224,12 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
 </div> 
 </body>
 </html>
+
+<!--Debug info goes here
+<?php
+echo $path; 
+echo "\n"; 
+echo cleanURL($path); 
+echo "\n"; 
+?>
+/debug-->
