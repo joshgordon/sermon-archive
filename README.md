@@ -14,4 +14,4 @@ Features
 - If a folder contains "readme.md", the markdown will be rendered out
   on to the webpage. 
 
-See a live demo at http://archive.spepmedia.com
+See a live demo at http://archive.spepmedia.com. The underlying directory structure is exposed at http://archive.spepmedia.com/sermons/
