@@ -10,6 +10,13 @@ function cleanURL($url) {
   }
   return implode('/', $newArray); 
 }
+
+
+function endsWith($haystack, $needle) {
+    // search forward starting from end minus needle length characters
+    return $needle === "" || strpos($haystack, $needle, strlen($haystack) - strlen($needle)) !== FALSE;
+}
+
 require_once('getid3/getid3.php'); 
 $getID3 = new getID3; 
 ?> 
@@ -168,7 +175,7 @@ foreach ($featured as $feature) {
 <?php
 if ($allDirs) { $inc=2; } else { $inc = 1; } 
 for ($i = 0; $i < count($items); $i+=$inc ) { 
-  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv") {
+  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg")) {
     $i+=1;
   }
   if ($i >= count($items)) { 
@@ -180,7 +187,7 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
       <td><?php echo "<a href=\"/".cleanURL($path)."/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
       <?php if ($allDirs) { 
-          while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv") {
+    while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg")) {
             $i+=1;
             echo "Foobar: $i : " . count($items); 
           }
