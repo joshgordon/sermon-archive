@@ -1,14 +1,18 @@
 <?php //include "config.php"; ?> 
 
 <?php
-function cleanURL($url) { 
+function cleanURL($url) {
+  if ($url == "")
+  {
+    return "" ;
+  }
   $array = explode('/', $url);
   $newArray = array(); 
   foreach ($array as $value) { 
     if ($value == "") { continue; } 
     $newArray[] = rawurlencode($value); 
   }
-  return implode('/', $newArray); 
+  return "/" . implode('/', $newArray); 
 }
 
 
@@ -46,7 +50,7 @@ $getID3 = new getID3;
 
 <link rel="stylesheet" href="/style.css" /> 
 
-<script>
+<script type="text/javascript">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -78,7 +82,7 @@ foreach ($chunks as $i => $chunk) {
     //Print out the breadcrumb trail.
     $output[] = sprintf(
         '<a href="%s">%s</a>',
-        implode('/', array_slice(array_map('cleanURL', $chunks), 0, $i + 1)),
+        implode('', array_slice(array_map('cleanURL', $chunks), 0, $i + 1)),
         $chunk
     );
 }
@@ -143,13 +147,13 @@ foreach ($featured as $feature) {
 ?> 
    <div class="cover">
       <a href="<?php echo cleanURL($feature[1]); ?>">
-      <img src="<?php echo $feature[2]; ?>" width="100%" height="100%" alt="<?php echo $feature[0]; ?>" />
-      <div class="info title">
-        <?php echo $feature[0]; ?>
-      </div>
-      <div class="info pastor"> 
-        <?php echo $feature[3]; ?> 
-      </div> 
+      <img src="<?php echo cleanURL($feature[2]); ?>" width="100%" height="100%" alt="<?php echo htmlspecialchars($feature[0]); ?>" />
+      <span class="info title">
+      <?php echo htmlspecialchars($feature[0]); ?>
+      </span>
+      <span class="info pastor"> 
+      <?php echo htmlspecialchars($feature[3]); ?> 
+      </span> 
     </a>
   </div>
 <?php } ?>
@@ -174,46 +178,62 @@ foreach ($featured as $feature) {
 
 <?php
 if ($allDirs) { $inc=2; } else { $inc = 1; } 
-for ($i = 0; $i < count($items); $i+=$inc ) { 
+for ($i = 0; $i < count($items); $i+=$inc ) {
+  //skip files that need skipping. 
   while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg")) {
     $i+=1;
   }
+
+  //If we've exceeded the number of items, stop. 
   if ($i >= count($items)) { 
     break; 
-  } 
-if (is_dir($sdir . $path . "/" . $items[$i])) { 
+  }
+
+  //if the element we're working with now is a directory, treat it as such. 
+  if (is_dir($sdir . $path . "/" . $items[$i])) { 
   ?>
     <tr>
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
-      <td><?php echo "<a href=\"/".cleanURL($path)."/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
-      <?php if ($allDirs) { 
-    while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg")) {
-            $i+=1;
-            echo "Foobar: $i : " . count($items); 
-          }
-          if ($i >= count($items)) { 
-            break; 
-          } 
+      <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
+<?php if ($allDirs) {
+      //more skipping. 
+      while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg")) {
+        $i+=1;
+      }
+      if ($i >= count($items)) { 
+        break; 
+      } 
 
-          if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
-                                <td><?php echo "<a href=\"".cleanURL($path)."/" . cleanURL($items[$i+1]) . "\">" . $items[$i+1] . "</a>"; ?> </td> 
-      <?php } else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }} else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }  ?> </tr> <?php
-  } else { 
+      //if we have another item to do. 
+      if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i+1]) . "\">" . $items[$i+1] . "</a>"; ?> </td> 
+      <?php }
+      //if we don't have more items to deal with, we just fill it with empty space. 
+      else
+      { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }}
+  //if we're not dealing with all directories, we fill the remaining columns with empty spaace for directories.  
+    else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }  ?> </tr> <?php
+  }
+  //if it's not a directory, we treat it as a file. 
+  else { 
   $file = $sdir . $path . "/" . $items[$i]; 
   if (pathinfo($file, PATHINFO_EXTENSION) == "mp3") { 
     $info = $getID3->analyze($sdir . $path . "/" . $items[$i]);
   }
+  // otherwise we don't have info. 
   else
-    $info = null; 
+    $info = null;
+
+  //Here's the code for outputting a single file. 
 ?>  
   <tr>
     <td><span class="glyphicon glyphicon-play"></span></td>
-    <td><?php if ($info != null && array_key_exists(0, $info['tags']['id3v2']['title'])) { 
-      echo "<a href=\"/sermons/" . cleanURL($path) . "/" . cleanURL($items[$i]) . "\">" . $info['tags']['id3v2']['title'][0] . "</a>"; 
+    <td><?php if ($info != null && array_key_exists(0, $info['tags']['id3v1']['title'])) { 
+    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($info['tags']['id3v1']['title'][0]) . "</a>"; 
     } else { 
-      echo "<a href=\"/sermons" . cleanURL($path) . "/" . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; } ?> </td>
-    <td><?php echo $info['tags']['id3v2']['comment'][0]; ?> </td>
-    <td><?php echo $info['tags']['id3v2']['artist'][0]; ?></td>
+    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($items[$i]) . "</a>"; } ?> </td>
+    <td><?php echo htmlspecialchars($info['tags']['id3v1']['comment'][0]); ?> </td>
+    <td><?php echo htmlspecialchars($info['tags']['id3v1']['artist'][0]); ?></td>
   </tr> 
 
 
@@ -226,7 +246,7 @@ if (is_dir($sdir . $path . "/" . $items[$i])) {
 </div> 
 <div class="footer"> 
   <div class="container"> 
-    <p class="text-muted"><a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> :: Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> :: <a href="http://validator.w3.org/check?uri=archive.spepmedia.com">Valid XHTML</a></p>
+    <p class="text-muted"><a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> :: Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> :: <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?php echo cleanURL($path); ?>">Valid XHTML</a></p>
   </div>
 </div> 
 </body>
