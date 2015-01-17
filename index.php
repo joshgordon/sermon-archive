@@ -112,7 +112,7 @@ foreach($items as $item) {
     $featured = true; 
     continue; 
   }
-  else if (!is_dir($sdir . $path . "/" . $item) && $allDirs) { 
+  else if ((!startsWith($item, ".") && !is_dir($sdir . $path . "/" . $item)) && $allDirs) { 
     $allDirs=false; 
   }
 }
