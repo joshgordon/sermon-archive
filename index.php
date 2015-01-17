@@ -16,9 +16,17 @@ function cleanURL($url) {
 }
 
 
+
+// These two functions courtsey of StackOverflow. 
+//http://stackoverflow.com/questions/834303/startswith-and-endswith-functions-in-php
 function endsWith($haystack, $needle) {
     // search forward starting from end minus needle length characters
     return $needle === "" || strpos($haystack, $needle, strlen($haystack) - strlen($needle)) !== FALSE;
+}
+
+function startsWith($haystack, $needle) {
+    // search backwards starting from haystack length characters from the end
+    return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== FALSE;
 }
 
 require_once('getid3/getid3.php'); 
@@ -180,7 +188,7 @@ foreach ($featured as $feature) {
 if ($allDirs) { $inc=2; } else { $inc = 1; } 
 for ($i = 0; $i < count($items); $i+=$inc ) {
   //skip files that need skipping. 
-  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg")) {
+  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg") || startsWith($items[$i], ".")) {
     $i+=1;
   }
 
@@ -197,7 +205,7 @@ for ($i = 0; $i < count($items); $i+=$inc ) {
       <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
 <?php if ($allDirs) {
       //more skipping. 
-      while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg")) {
+      while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg") || startsWith($items[$i+1], ".")) {
         $i+=1;
       }
       if ($i >= count($items)) { 
