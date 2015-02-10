@@ -1,23 +1,32 @@
-<?php //include "config.php"; ?> 
+<?php //include "config.php"; ?>
 
 <?php
+
+// Path in which to explore for sermons/other content.
+$path = urldecode($_SERVER['REQUEST_URI']);
+
+//Strip leading slash if the path is "/".
+if ($path == "/") {
+  $path = "";
+}
+
 function cleanURL($url) {
   if ($url == "")
   {
     return "" ;
   }
   $array = explode('/', $url);
-  $newArray = array(); 
-  foreach ($array as $value) { 
-    if ($value == "") { continue; } 
-    $newArray[] = rawurlencode($value); 
+  $newArray = array();
+  foreach ($array as $value) {
+    if ($value == "") { continue; }
+    $newArray[] = rawurlencode($value);
   }
-  return "/" . implode('/', $newArray); 
+  return "/" . implode('/', $newArray);
 }
 
 
 
-// These two functions courtsey of StackOverflow. 
+// These two functions courtsey of StackOverflow.
 //http://stackoverflow.com/questions/834303/startswith-and-endswith-functions-in-php
 function endsWith($haystack, $needle) {
     // search forward starting from end minus needle length characters
@@ -29,10 +38,10 @@ function startsWith($haystack, $needle) {
     return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== FALSE;
 }
 
-require_once('getid3/getid3.php'); 
-$getID3 = new getID3; 
-?> 
-<?php $sdir = "/data/spep/spepmedia.com/"; ?> 
+require_once('getid3/getid3.php');
+$getID3 = new getID3;
+?>
+<?php $sdir = "/data/spep/spepmedia.com/"; ?>
 <?php
 //ini_set('display_errors', 1);
 //error_reporting(~0);
@@ -40,8 +49,21 @@ $getID3 = new getID3;
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"><head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
-<title>Sermon Archive</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+
+<?php
+$pageTitle = "";
+$tokens = explode('/', $path);
+echo "<!-- ";
+var_dump($tokens);
+echo count($tokens);
+echo $tokens[count($tokens) - 1] . " - ";
+echo "-->";
+if (count($tokens) > 1) {
+  $pageTitle = $tokens[count($tokens) - 1] . " - ";
+} ?>
+<title><?php echo $pageTitle;?> Sermon Archive</title>
 
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
@@ -56,7 +78,7 @@ $getID3 = new getID3;
 <!-- Latest compiled and minified JavaScript -->
 <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
-<link rel="stylesheet" href="/style.css" /> 
+<link rel="stylesheet" href="/style.css" />
 
 <script type="text/javascript">
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -73,20 +95,14 @@ $getID3 = new getID3;
 <body>
 <?php
 
-// Path in which to explore for sermons/other content. 
-$path = urldecode($_SERVER['REQUEST_URI']);
 
-//Strip leading slash if the path is "/".
-if ($path == "/") {
-  $path = "";
-}
 
 //Explode the path into a breadcrumb trail
-$output = array(); 
+$output = array();
 $output[] = '<a href="/">Home</a>';
 $chunks = explode('/', $path);
 foreach ($chunks as $i => $chunk) {
-    if ($chunk == "" ) { continue; } 
+    if ($chunk == "" ) { continue; }
     //Print out the breadcrumb trail.
     $output[] = sprintf(
         '<a href="%s">%s</a>',
@@ -94,74 +110,78 @@ foreach ($chunks as $i => $chunk) {
         $chunk
     );
 }
-  
-//Scan the directory for items. 
-$items=scandir($sdir . $path); 
+
+//Scan the directory for items.
+$items=scandir($sdir . $path);
 
 
-$allDirs=true; 
-$readme=false; 
-$featured=false; 
+$allDirs=true;
+$readme=false;
+$featured=false;
 
-if (count($items) < 6) { $allDirs=false; } 
+if (count($items) < 6) { $allDirs=false; }
 //Look to see if the path is only directories
-foreach($items as $item) { 
-  if ($item == "readme.md") { 
-    $readme=true; 
-  } else if ($item == "featured.csv") { 
-    $featured = true; 
-    continue; 
+foreach($items as $item) {
+  if ($item == "readme.md") {
+    $readme=true;
+  } else if ($item == "featured.csv") {
+    $featured = true;
+    continue;
+  } else if ($item == "robots.txt") {
+    continue;
   }
-  else if ((!startsWith($item, ".") && !is_dir($sdir . $path . "/" . $item)) && $allDirs) { 
-    $allDirs=false; 
+
+  //Flags a file that doesn't need to be ignored.
+  else if ((!startsWith($item, ".") && !is_dir($sdir . $path . "/" . $item)) && $allDirs) {
+    $allDirs=false;
   }
 }
 
 ?>
 <div class="content-fluid">
-<div class="row"> 
-  <div class="col-md-8 col-md-offset-2"> 
-    <h1>SPEP Sermon Archive</h1> 
-  </div> 
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <h1>SPEP Sermon Archive</h1>
+  </div>
 </div>
-<div class="row"> 
+<div class="row">
 <div class="col-md-8 col-md-offset-2">
 <h4>
-<?php echo implode(' &gt;&gt; ', $output); ?> 
+<?php echo implode(' &gt;&gt; ', $output); ?>
 </h4>
 </div>
 
-</div> 
+</div>
 
-<?php if ($readme) { ?> 
-<div class="row"> 
+<?php if ($readme) { ?>
+<div class="row">
 <div class="col-md-6 col-md-offset-3">
 <div class="well well-sm">
-<?php echo "" . shell_exec("markdown " . $sdir . $path . "/readme.md"); ?> 
+<?php echo "" . shell_exec("markdown " . $sdir . $path . "/readme.md"); ?>
 </div>
 </div>
-</div> 
-<?php } if ($path == "" && $featured) { 
-$featured = array_map('str_getcsv', file($sdir . "/featured.csv")); 
-?> 
+</div>
+<?php } if ($path == "" && $featured) {
+$featured = array_map('str_getcsv', file($sdir . "/featured.csv"));
+?>
 <div class="row">
-  <div class="col-md-8 col-md-offset-2"> 
+  <div class="col-md-8 col-md-offset-2">
   <h3>Featured</h3>
-<?php 
-foreach ($featured as $feature) { 
-  if ($feature[0] == "title" || $feature[0] == "") 
-    continue; 
-  
-?> 
+<?php
+foreach ($featured as $feature) {
+  if ($feature[0] == "title" || $feature[0] == "")
+    continue;
+
+?>
    <div class="cover">
       <a href="<?php echo cleanURL($feature[1]); ?>">
       <img src="<?php echo cleanURL($feature[2]); ?>" width="100%" height="100%" alt="<?php echo htmlspecialchars($feature[0]); ?>" />
       <span class="info title">
       <?php echo htmlspecialchars($feature[0]); ?>
       </span>
-      <span class="info pastor"> 
-      <?php echo htmlspecialchars($feature[3]); ?> 
-      </span> 
+      <span class="info pastor">
+      <?php echo htmlspecialchars($feature[3]); ?>
+      </span>
     </a>
   </div>
 <?php } ?>
@@ -177,94 +197,109 @@ foreach ($featured as $feature) {
 
 <table class="table table-striped">
 <thead>
-<?php if ($allDirs) { ?> 
-<tr><th class="col-md-1"></th><th class="col-md-5">Title</th><th class="col-md-1"></th><th class="col-md-5">Title</th></tr> 
+<?php if ($allDirs) { ?>
+<tr><th class="col-md-1"></th><th class="col-md-5">Title</th><th class="col-md-1"></th><th class="col-md-5">Title</th></tr>
 <?php } else { ?>
-<tr><th></th><th>Title</th><th>Comments</th><th>Pastor/Artist</th></tr> 
-<?php } ?> 
+<tr><th></th><th>Title</th><th>Comments</th><th>Pastor/Artist</th></tr>
+<?php } ?>
 </thead><tbody>
 
 <?php
-if ($allDirs) { $inc=2; } else { $inc = 1; } 
+if ($allDirs) { $inc=2; } else { $inc = 1; }
 for ($i = 0; $i < count($items); $i+=$inc ) {
-  //skip files that need skipping. 
-  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg") || startsWith($items[$i], ".")) {
+  //skip files that need skipping.
+  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg") || startsWith($items[$i], ".") || $items[$i] == "robots.txt") {
     $i+=1;
   }
 
-  //If we've exceeded the number of items, stop. 
-  if ($i >= count($items)) { 
-    break; 
+  //If we've exceeded the number of items, stop.
+  if ($i >= count($items)) {
+    break;
   }
 
-  //if the element we're working with now is a directory, treat it as such. 
-  if (is_dir($sdir . $path . "/" . $items[$i])) { 
+  //if the element we're working with now is a directory, treat it as such.
+  if (is_dir($sdir . $path . "/" . $items[$i])) {
   ?>
     <tr>
       <td><span class="glyphicon glyphicon-folder-close"></span></td>
       <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
 <?php if ($allDirs) {
-      //more skipping. 
-      while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg") || startsWith($items[$i+1], ".")) {
+      //more skipping.
+      while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg") || startsWith($items[$i+1], ".") || $items[$i+1] == "robots.txt") {
         $i+=1;
       }
-      if ($i >= count($items)) { 
-        break; 
-      } 
+      if ($i >= count($items)) {
+        break;
+      }
 
-      //if we have another item to do. 
+      //if we have another item to do.
       if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
-        <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i+1]) . "\">" . $items[$i+1] . "</a>"; ?> </td> 
+        <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i+1]) . "\">" . $items[$i+1] . "</a>"; ?> </td>
       <?php }
-      //if we don't have more items to deal with, we just fill it with empty space. 
+      //if we don't have more items to deal with, we just fill it with empty space.
       else
       { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }}
-  //if we're not dealing with all directories, we fill the remaining columns with empty spaace for directories.  
+  //if we're not dealing with all directories, we fill the remaining columns with empty spaace for directories.
     else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }  ?> </tr> <?php
   }
-  //if it's not a directory, we treat it as a file. 
-  else { 
-  $file = $sdir . $path . "/" . $items[$i]; 
-  if (pathinfo($file, PATHINFO_EXTENSION) == "mp3") { 
+  //if it's not a directory, we treat it as a file.
+  else {
+  $file = $sdir . $path . "/" . $items[$i];
+  if (pathinfo($file, PATHINFO_EXTENSION) == "mp3") {
     $info = $getID3->analyze($sdir . $path . "/" . $items[$i]);
   }
-  // otherwise we don't have info. 
+  // otherwise we don't have info.
   else
     $info = null;
 
-  //Here's the code for outputting a single file. 
-?>  
+  //Here's the code for outputting a single file.
+?>
   <tr>
     <td><span class="glyphicon glyphicon-play"></span></td>
-    <td><?php if ($info != null && array_key_exists(0, $info['tags']['id3v1']['title'])) { 
-    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($info['tags']['id3v1']['title'][0]) . "</a>"; 
-    } else { 
+    <td><?php if ($info != null && array_key_exists(0, $info['tags']['id3v2']['title'])) {
+    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($info['tags']['id3v2']['title'][0]) . "</a>";
+    } else if ($info != null && array_key_exists(0, $info['tags']['id3v1']['title'])) {
+    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($info['tags']['id3v1']['title'][0]) . "</a>";
+    } else {
     echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($items[$i]) . "</a>"; } ?> </td>
-    <td><?php echo htmlspecialchars($info['tags']['id3v1']['comment'][0]); ?> </td>
-    <td><?php echo htmlspecialchars($info['tags']['id3v1']['artist'][0]); ?></td>
-  </tr> 
+    <td>
+    <?php
+    if ($info != null && array_key_exists(0, $info['tags']['id3v2']['comment'])) {
+      echo htmlspecialchars($info['tags']['id3v2']['comment'][0]);
+    } else if ($info != null && array_key_exists(0, $info['tags']['id3v1']['comment'])) {
+      echo htmlspecialchars($info['tags']['id3v1']['comment'][0]);
+    } ?>
+    </td>
+    <td>
+    <?php
+    if ($info != null && array_key_exists(0, $info['tags']['id3v2']['artist'])) {
+      echo htmlspecialchars($info['tags']['id3v2']['artist'][0]);
+    } else if ($info != null && array_key_exists(0, $info['tags']['id3v1']['artist'])) {
+      echo htmlspecialchars($info['tags']['id3v1']['artist'][0]);
+    } ?>
+  </tr>
 
 
 
-<?php }}?> 
+<?php }}?>
 </tbody></table>
 </div>
 
 </div>
-</div> 
-<div class="footer"> 
-  <div class="container"> 
+</div>
+<div class="footer">
+  <div class="container">
     <p class="text-muted"><a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> :: Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> :: <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?php echo cleanURL($path); ?>">Valid XHTML</a></p>
   </div>
-</div> 
+</div>
 </body>
 </html>
 
 <!--Debug info goes here
 <?php
-echo $path; 
-echo "\n"; 
-echo cleanURL($path); 
-echo "\n"; 
+echo $path;
+echo "\n";
+echo cleanURL($path);
+echo "\n";
 ?>
 /debug-->
