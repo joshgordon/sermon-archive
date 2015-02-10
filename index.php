@@ -141,7 +141,7 @@ foreach($items as $item) {
 <div class="content-fluid">
 <div class="row">
   <div class="col-md-8 col-md-offset-2">
-    <h1>SPEP Sermon Archive</h1>
+    <h1><?php echo $pageTitle; ?>SPEP Sermon Archive</h1>
   </div>
 </div>
 <div class="row">
