@@ -1,0 +1,12 @@
+[
+  {
+    "title": "A title",
+    "url": "http://foo/bar",
+    "artist": "foobar"
+  },
+  {
+    "title": "A second title",
+    "url": "http://foo/bar",
+    "artist": "foobar"
+  }
+]

@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0030)https://archive.spepmedia.com/ -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+
+<!-- array(1) {
+  [0]=>
+  string(0) ""
+}
+1 - --><title> Sermon Archive</title>
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script type="text/javascript" src="/lib/jquery/dist/jquery.min.js"></script>
+
+<!-- Latest compiled and minified JavaScript -->
+<script type="text/javascript" src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+
+<!--anuglar JS-->
+<script src="/lib/angular/angular.min.js"></script>
+<script src="/js/app.js"></script>
+
+<link rel="stylesheet" href="https://archive.spepmedia.com/style.css">
+</head>
+<body ng-app="sermonArchiveApp">
+<div class="content-fluid">
+<div class="row">
+  <div class="col-md-8 col-md-offset-2">
+    <h1>SPEP Sermon Archive</h1>
+  </div>
+</div>
+<div class="row">
+<div class="col-md-8 col-md-offset-2">
+<h4>
+<a href="#">Home</a></h4>
+</div>
+
+</div>
+
+<div class="row">
+<div class="col-md-6 col-md-offset-3">
+<div class="well well-sm" ng-controller="introText">
+  {{text}}
+</div>
+</div>
+</div>
+<div class="row">
+  <div class="col-md-8 col-md-offset-2" ng-controller="sermonCovers">
+  <h3>Featured</h3>
+   <div class="cover" ng-repeat="feature in featured">
+      <a href="https://archive.spepmedia.com/{{feature.URL}}">
+      <img ng-src="https://archive.spepmedia.com/{{feature.cover}}" width="100%" height="100%" alt="{{feature.title}}">
+      <span class="info title">
+      {{feature.title}}</span>
+      <span class="info pastor">
+      {{feature.pastor}}</span>
+    </a>
+  </div>
+
+  </div>
+</div>
+
+
+<div class="row">
+
+<div class="col-md-8 col-md-offset-2">
+
+<table class="table table-striped">
+<thead>
+<tr><th class="col-md-1"></th><th class="col-md-5">Title</th><th class="col-md-1"></th><th class="col-md-5">Title</th></tr>
+</thead><tbody>
+
+    <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/10%20things%20Christians%20should%20do">10 things Christians should do</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/A%20Gospel%20Conversation">A Gospel Conversation</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/A%20Great%20Time%20to%20Be%20a%20Christian">A Great Time to Be a Christian</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/A%20New%20Name">A New Name</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/A%20New%20Vision">A New Vision</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/A%20Working%20Faith">A Working Faith</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Advent">Advent</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Advent%20Witnesses">Advent Witnesses</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Christian%20Stewardship">Christian Stewardship</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Christmas">Christmas</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Connectedness%20in%20the%20Church">Connectedness in the Church</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Crucial%20Christian%20Convictions">Crucial Christian Convictions</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Discipleship">Discipleship</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Elements%20of%20a%20Successful%20Church">Elements of a Successful Church</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Ephesians">Ephesians</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Exodus%20-%20Learning%20to%20be%20Free">Exodus - Learning to be Free</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Full%20Confidence%20Seminar">Full Confidence Seminar</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Gifts%20Of%20God">Gifts Of God</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Good%20News">Good News</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Guidance">Guidance</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Images%20of%20the%20Church">Images of the Church</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Legacy">Legacy</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Living%20in%20a%20Spiritually%20Alien%20Culture">Living in a Spiritually Alien Culture</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Love%20Unpacked">Love Unpacked</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Ministries%20of%20the%20Church">Ministries of the Church</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Music">Music</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Names%20of%20Christ">Names of Christ</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Names%20of%20God">Names of God</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Names%20of%20the%20Holy%20Spirit">Names of the Holy Spirit</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/No%20Series">No Series</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/People%20God%20Blesses">People God Blesses</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/People%20God%20can%20Use">People God can Use</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Persistent%20Grace">Persistent Grace</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Prayer">Prayer</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Prayer%20-%20A%20Deeper%20Work%20of%20God%27s%20Grace">Prayer - A Deeper Work of God's Grace</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Preaching%20the%20Gospel%20to%20Ourselves">Preaching the Gospel to Ourselves</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Promises">Promises</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Psalms">Psalms</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Psalms-Worship">Psalms-Worship</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Revelation">Revelation</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Stewardship%20God%27s%20Way">Stewardship God's Way</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Successful%20Sanctification">Successful Sanctification</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/The%20Call%20of%20Christ">The Call of Christ</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/The%20Christian%20Lifestyle">The Christian Lifestyle</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/The%20Good%20Steward">The Good Steward</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/The%20Gospel%20of%20Mark">The Gospel of Mark</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/The%20Lord%27s%20Prayer">The Lord's Prayer</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/The%20Ministry%20of%20Mending">The Ministry of Mending</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/The%20Power%20of%20the%20Cross">The Power of the Cross</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/The%20Resurrection">The Resurrection</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Trained%20to%20Follow%20Jesus">Trained to Follow Jesus</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Turning%20the%20World%20Upside%20Down">Turning the World Upside Down</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/Walk%20in%20the%20Light">Walk in the Light</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/We%27re%20in%20this%20Together">We're in this Together</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/What%20is%20Outreach%3F">What is Outreach?</a> </td>
+<td><span class="glyphicon glyphicon-folder-close"></span></td>
+        <td><a href="https://archive.spepmedia.com/Wisdom%20for%20Life">Wisdom for Life</a> </td>
+       </tr>     <tr>
+      <td><span class="glyphicon glyphicon-folder-close"></span></td>
+      <td><a href="https://archive.spepmedia.com/You%20are%20a%20Worshipper">You are a Worshipper</a> </td>
+ <td>&nbsp;</td><td>&nbsp; </td>  </tr> </tbody></table>
+</div>
+
+</div>
+</div>
+<div class="footer">
+  <div class="container">
+    <p class="text-muted"><a href="http://spepchurch.org/">Severna Park EP Church (PCA)</a> :: Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> :: <a href="http://validator.w3.org/check?uri=archive.spepmedia.com">Valid XHTML</a></p>
+  </div>
+</div>
+
+
+
+<!--Debug info goes here
+
+
+/debug-->
+</body></html>
