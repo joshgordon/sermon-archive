@@ -1,2 +1,4 @@
-# node-express
-Basic template for a NodeJS app using the Express web-application framework
+# Sermon archive 2.0
+Still under very eary development. 
+
+Work in progress.
