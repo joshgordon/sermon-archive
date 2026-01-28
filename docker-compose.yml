@@ -1,0 +1,19 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount source files for live reloading during development
+      - ./index.php:/var/www/html/index.php
+      - ./functions.php:/var/www/html/functions.php
+      - ./Parsedown.php:/var/www/html/Parsedown.php
+      - ./style.css:/var/www/html/style.css
+      - ./getid3:/var/www/html/getid3
+
+      # Mount your sermon data directory
+      # Update this path to point to your local sermon files
+      - ./sample-data:/data/spep/spepmedia.com
+    environment:
+      - PHP_DISPLAY_ERRORS=1
+    restart: unless-stopped
