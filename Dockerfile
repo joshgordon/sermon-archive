@@ -14,10 +14,11 @@ WORKDIR /var/www/html
 
 # Copy application files
 COPY index.php functions.php Parsedown.php style.css favicon.ico ./
+COPY config.example.php ./config.php
 COPY getid3/ ./getid3/
 
 # Create data directory for sermon files
-RUN mkdir -p /data/sermons
+RUN mkdir -p /data/spep/spepmedia.com
 
 # Configure PHP for development
 RUN mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"

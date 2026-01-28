@@ -38,14 +38,59 @@ volumes:
   - /path/to/your/sermons:/data/spep/spepmedia.com
 ```
 
+## Configuration
+
+Copy `config.example.php` to `config.php` and customize the settings:
+
+```php
+return [
+    // Site Settings
+    'site_name' => 'My Church Sermon Archive',
+    'organization_name' => 'My Church',
+    'organization_url' => 'https://mychurch.org',
+
+    // File Paths
+    'data_directory' => '/path/to/sermons/',
+    'media_url_prefix' => '/sermons',
+
+    // Analytics (leave empty to disable)
+    'google_analytics_id' => 'UA-XXXXXXXX-X',
+
+    // Footer Links (set to null to hide)
+    'hosting_provider' => [
+        'name' => 'DigitalOcean',
+        'url' => 'https://digitalocean.com',
+    ],
+    'validator_domain' => 'archive.mychurch.org',
+
+    // Display Options
+    'two_column_min_items' => 6,
+    'skip_files' => ['readme.md', 'featured.csv', 'robots.txt'],
+    'skip_extensions' => ['.jpg'],
+];
+```
+
+### Configuration Options
+
+| Option | Description |
+|--------|-------------|
+| `site_name` | Appears in the page title and header |
+| `organization_name` | Your church/organization name for the footer |
+| `organization_url` | Link to your main website |
+| `data_directory` | Absolute path to sermon files on the server |
+| `media_url_prefix` | URL prefix for direct file links (must match web server config) |
+| `google_analytics_id` | Google Analytics tracking ID (leave empty to disable) |
+| `hosting_provider` | Hosting provider credit in footer (set to `null` to hide) |
+| `validator_domain` | Domain for W3C validator link (set to `null` to hide) |
+| `two_column_min_items` | Minimum items to trigger two-column directory layout |
+| `skip_files` | Filenames to hide from directory listings |
+| `skip_extensions` | File extensions to hide from directory listings |
+
 ## Manual Installation
 
 1. Copy all PHP files to your web server document root
-2. Configure your web server to route all requests through `index.php`
-3. Update the `$sdir` variable in `index.php` to point to your sermon directory:
-   ```php
-   $sdir = '/path/to/your/sermons/';
-   ```
+2. Copy `config.example.php` to `config.php` and customize the settings
+3. Configure your web server to route all requests through `index.php`
 
 ### Nginx Configuration
 
@@ -118,6 +163,8 @@ Both ID3v1 and ID3v2 tags are supported, with v2 taking precedence.
 sermon-archive/
   index.php           # Main application entry point
   functions.php       # Utility functions
+  config.php          # Your local configuration (not in git)
+  config.example.php  # Configuration template
   Parsedown.php       # Markdown parser library
   style.css           # Custom styles
   getid3/             # ID3 tag reading library

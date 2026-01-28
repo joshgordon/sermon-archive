@@ -15,3 +15,6 @@ Thumbs.db
 # PHP
 vendor/
 composer.lock
+
+# Configuration (use config.example.php as template)
+config.php

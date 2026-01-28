@@ -7,6 +7,7 @@ services:
       # Mount source files for live reloading during development
       - ./index.php:/var/www/html/index.php
       - ./functions.php:/var/www/html/functions.php
+      - ./config.php:/var/www/html/config.php
       - ./Parsedown.php:/var/www/html/Parsedown.php
       - ./style.css:/var/www/html/style.css
       - ./getid3:/var/www/html/getid3

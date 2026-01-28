@@ -8,6 +8,18 @@ declare(strict_types=1);
  * Modern PHP 8+ utility functions for the sermon archive.
  */
 
+// Global configuration array, set by index.php
+global $config;
+
+/**
+ * Get a configuration value with an optional default.
+ */
+function config(string $key, mixed $default = null): mixed
+{
+    global $config;
+    return $config[$key] ?? $default;
+}
+
 /**
  * Clean and encode a URL path for safe linking.
  */
@@ -37,15 +49,18 @@ function shouldSkipItem(string $item): bool
         return true;
     }
 
-    // Skip known special files
-    $skipFiles = ['readme.md', 'featured.csv', 'robots.txt'];
+    // Skip known special files from config
+    $skipFiles = config('skip_files', ['readme.md', 'featured.csv', 'robots.txt']);
     if (in_array($item, $skipFiles, strict: true)) {
         return true;
     }
 
-    // Skip image files
-    if (str_ends_with($item, '.jpg')) {
-        return true;
+    // Skip files with certain extensions from config
+    $skipExtensions = config('skip_extensions', ['.jpg']);
+    foreach ($skipExtensions as $ext) {
+        if (str_ends_with($item, $ext)) {
+            return true;
+        }
     }
 
     return false;
@@ -124,8 +139,9 @@ function parseFeaturedItems(string $csvPath): array
  */
 function analyzeDirectory(string $basePath, string $relativePath, array $items): array
 {
+    $minItems = config('two_column_min_items', 6);
     $result = [
-        'allDirs' => count($items) >= 6,
+        'allDirs' => count($items) >= $minItems,
         'hasReadme' => false,
         'hasFeatured' => false,
     ];
@@ -179,10 +195,11 @@ function buildDirectoryRow(string $path, string $name, bool $allDirs, array $ite
 function buildFileRow(string $path, string $filename, ?array $id3Info): array
 {
     $title = getID3TagPreferV2($id3Info, 'title') ?? $filename;
+    $mediaPrefix = config('media_url_prefix', '/sermons');
 
     return [
         'type' => 'file',
-        'link' => '/sermons' . cleanURL($path) . cleanURL($filename),
+        'link' => $mediaPrefix . cleanURL($path) . cleanURL($filename),
         'title' => htmlspecialchars($title),
         'comment' => htmlspecialchars(getID3TagPreferV2($id3Info, 'comment') ?? ''),
         'artist' => htmlspecialchars(getID3TagPreferV2($id3Info, 'artist') ?? ''),

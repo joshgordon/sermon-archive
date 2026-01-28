@@ -12,13 +12,24 @@ declare(strict_types=1);
 // CONFIGURATION & DEPENDENCIES
 // ============================================================================
 
-$sdir = '/data/spep/spepmedia.com/';
+// Load configuration
+global $config;
+$config = require __DIR__ . '/config.php';
 
 require_once __DIR__ . '/Parsedown.php';
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/getid3/getid3.php';
 
 $getID3 = new getID3();
+
+// Extract commonly used config values
+$sdir = config('data_directory');
+$siteName = config('site_name', 'Sermon Archive');
+$orgName = config('organization_name');
+$orgUrl = config('organization_url');
+$gaId = config('google_analytics_id');
+$hostingProvider = config('hosting_provider');
+$validatorDomain = config('validator_domain');
 
 // ============================================================================
 // DATA PREPARATION
@@ -96,7 +107,7 @@ for ($i = 0; $i < $itemCount; $i++) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title><?= htmlspecialchars($pageTitle) ?> Sermon Archive</title>
+    <title><?= htmlspecialchars($pageTitle . $siteName) ?></title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
@@ -109,22 +120,24 @@ for ($i = 0; $i < $itemCount; $i++) {
     <!-- Custom styles -->
     <link rel="stylesheet" href="/style.css" />
 
+    <?php if ($gaId): ?>
     <!-- Google Analytics -->
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
         })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-        ga('create', 'UA-47721127-4', 'auto');
+        ga('create', '<?= htmlspecialchars($gaId) ?>', 'auto');
         ga('send', 'pageview');
     </script>
+    <?php endif; ?>
 </head>
 <body>
     <div class="content-fluid">
         <!-- Header -->
         <div class="row">
             <div class="col-md-8 col-md-offset-2">
-                <h1><?= htmlspecialchars($pageTitle) ?>SPEP Sermon Archive</h1>
+                <h1><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
             </div>
         </div>
 
@@ -223,9 +236,17 @@ for ($i = 0; $i < $itemCount; $i++) {
     <div class="footer">
         <div class="container">
             <p class="text-muted">
-                <a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> ::
-                Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> ::
-                <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?= cleanURL($path) ?>">Valid XHTML</a>
+                <?php if ($orgName && $orgUrl): ?>
+                <a href="<?= htmlspecialchars($orgUrl) ?>"><?= htmlspecialchars($orgName) ?></a>
+                <?php elseif ($orgName): ?>
+                <?= htmlspecialchars($orgName) ?>
+                <?php endif; ?>
+                <?php if ($hostingProvider): ?>
+                :: Hosted on <a href="<?= htmlspecialchars($hostingProvider['url']) ?>"><?= htmlspecialchars($hostingProvider['name']) ?></a>
+                <?php endif; ?>
+                <?php if ($validatorDomain): ?>
+                :: <a href="http://validator.w3.org/check?uri=<?= htmlspecialchars($validatorDomain) ?><?= cleanURL($path) ?>">Valid XHTML</a>
+                <?php endif; ?>
             </p>
         </div>
     </div>
