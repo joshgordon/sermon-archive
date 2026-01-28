@@ -1,299 +1,393 @@
-<?php //include "config.php"; ?>
-
 <?php
+/**
+ * Sermon Archive - Main Index
+ *
+ * This file displays a browsable archive of sermons and media files.
+ */
 
-// Path in which to explore for sermons/other content.
-$path = urldecode($_SERVER['REQUEST_URI']);
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
 
-//Strip leading slash if the path is "/".
-if ($path == "/") {
-  $path = "";
-}
+$sdir = "/data/spep/spepmedia.com/";
 
+// Uncomment for debugging:
+// ini_set('display_errors', 1);
+// error_reporting(~0);
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Clean and encode a URL path for safe linking.
+ */
 function cleanURL($url) {
-  if ($url == "")
-  {
-    return "" ;
-  }
-  $array = explode('/', $url);
-  $newArray = array();
-  foreach ($array as $value) {
-    if ($value == "") { continue; }
-    $newArray[] = rawurlencode($value);
-  }
-  return "/" . implode('/', $newArray);
+    if ($url == "") {
+        return "";
+    }
+    $array = explode('/', $url);
+    $newArray = array();
+    foreach ($array as $value) {
+        if ($value == "") {
+            continue;
+        }
+        $newArray[] = rawurlencode($value);
+    }
+    return "/" . implode('/', $newArray);
 }
 
-
-
-// These two functions courtsey of StackOverflow.
-//http://stackoverflow.com/questions/834303/startswith-and-endswith-functions-in-php
+/**
+ * Check if a string ends with a given suffix.
+ * Courtesy of StackOverflow: http://stackoverflow.com/questions/834303/startswith-and-endswith-functions-in-php
+ */
 function endsWith($haystack, $needle) {
-    // search forward starting from end minus needle length characters
     return $needle === "" || strpos($haystack, $needle, strlen($haystack) - strlen($needle)) !== FALSE;
 }
 
+/**
+ * Check if a string starts with a given prefix.
+ */
 function startsWith($haystack, $needle) {
-    // search backwards starting from haystack length characters from the end
     return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== FALSE;
 }
 
+/**
+ * Check if an item should be skipped in directory listings.
+ */
+function shouldSkipItem($item) {
+    return $item == "."
+        || $item == ".."
+        || $item == "readme.md"
+        || $item == "featured.csv"
+        || endsWith($item, ".jpg")
+        || startsWith($item, ".")
+        || $item == "robots.txt";
+}
+
+/**
+ * Get ID3 tag value safely from nested array structure.
+ */
+function getID3Tag($info, $version, $tag) {
+    if ($info !== null
+        && isset($info['tags'][$version][$tag])
+        && array_key_exists(0, $info['tags'][$version][$tag])) {
+        return $info['tags'][$version][$tag][0];
+    }
+    return null;
+}
+
+/**
+ * Get ID3 tag value, preferring id3v2 over id3v1.
+ */
+function getID3TagPreferV2($info, $tag) {
+    $value = getID3Tag($info, 'id3v2', $tag);
+    if ($value === null) {
+        $value = getID3Tag($info, 'id3v1', $tag);
+    }
+    return $value;
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
 require_once('getid3/getid3.php');
 $getID3 = new getID3;
-?>
-<?php $sdir = "/data/spep/spepmedia.com/"; ?>
-<?php
-//ini_set('display_errors', 1);
-//error_reporting(~0);
-?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
+// ============================================================================
+// DATA PREPARATION
+// ============================================================================
 
-<?php
+// Parse the request path
+$path = urldecode($_SERVER['REQUEST_URI']);
+if ($path == "/") {
+    $path = "";
+}
+
+// Build page title from path
 $pageTitle = "";
 $tokens = explode('/', $path);
-echo "<!-- ";
-var_dump($tokens);
-echo count($tokens);
-echo $tokens[count($tokens) - 1] . " - ";
-echo "-->";
 if (count($tokens) > 1) {
-  $pageTitle = $tokens[count($tokens) - 1] . " - ";
-} ?>
-<title><?php echo $pageTitle;?> Sermon Archive</title>
+    $pageTitle = $tokens[count($tokens) - 1] . " - ";
+}
 
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+// Debug info for HTML comment
+$debugTokens = $tokens;
+$debugTokenCount = count($tokens);
+$debugLastToken = $tokens[count($tokens) - 1];
 
-<!-- Optional theme -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
-
-
-<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-
-<!-- Latest compiled and minified JavaScript -->
-<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-
-<link rel="stylesheet" href="/style.css" />
-
-<script type="text/javascript">
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-47721127-4', 'auto');
-  ga('send', 'pageview');
-
-</script>
-
-</head>
-<body>
-<?php
-
-
-
-//Explode the path into a breadcrumb trail
-$output = array();
-$output[] = '<a href="/">Home</a>';
+// Build breadcrumb trail
+$breadcrumbs = array();
+$breadcrumbs[] = '<a href="/">Home</a>';
 $chunks = explode('/', $path);
 foreach ($chunks as $i => $chunk) {
-    if ($chunk == "" ) { continue; }
-    //Print out the breadcrumb trail.
-    $output[] = sprintf(
+    if ($chunk == "") {
+        continue;
+    }
+    $breadcrumbs[] = sprintf(
         '<a href="%s">%s</a>',
         implode('', array_slice(array_map('cleanURL', $chunks), 0, $i + 1)),
         $chunk
     );
 }
+$breadcrumbHtml = implode(' &gt;&gt; ', $breadcrumbs);
 
-//Scan the directory for items.
-$items=scandir($sdir . $path);
+// Scan the directory
+$items = scandir($sdir . $path);
 
+// Analyze directory contents
+$allDirs = true;
+$hasReadme = false;
+$hasFeatured = false;
 
-$allDirs=true;
-$readme=false;
-$featured=false;
-
-if (count($items) < 6) { $allDirs=false; }
-//Look to see if the path is only directories
-foreach($items as $item) {
-  if ($item == "readme.md") {
-    $readme=true;
-  } else if ($item == "featured.csv") {
-    $featured = true;
-    continue;
-  } else if ($item == "robots.txt") {
-    continue;
-  }
-
-  //Flags a file that doesn't need to be ignored.
-  else if ((!startsWith($item, ".") && !is_dir($sdir . $path . "/" . $item)) && $allDirs) {
-    $allDirs=false;
-  }
+if (count($items) < 6) {
+    $allDirs = false;
 }
 
-?>
-<div class="content-fluid">
-<div class="row">
-  <div class="col-md-8 col-md-offset-2">
-    <h1><?php echo $pageTitle; ?>SPEP Sermon Archive</h1>
-  </div>
-</div>
-<div class="row">
-<div class="col-md-8 col-md-offset-2">
-<h4>
-<?php echo implode(' &gt;&gt; ', $output); ?>
-</h4>
-</div>
+foreach ($items as $item) {
+    if ($item == "readme.md") {
+        $hasReadme = true;
+    } else if ($item == "featured.csv") {
+        $hasFeatured = true;
+    } else if ($item == "robots.txt") {
+        continue;
+    } else if (!startsWith($item, ".") && !is_dir($sdir . $path . "/" . $item) && $allDirs) {
+        $allDirs = false;
+    }
+}
 
-</div>
+// Prepare readme content if present
+$readmeHtml = "";
+if ($hasReadme) {
+    $readmeHtml = shell_exec("markdown " . $sdir . $path . "/readme.md");
+}
 
-<?php if ($readme) { ?>
-<div class="row">
-<div class="col-md-6 col-md-offset-3">
-<div class="well well-sm">
-<?php echo "" . shell_exec("markdown " . $sdir . $path . "/readme.md"); ?>
-</div>
-</div>
-</div>
-<?php } if ($path == "" && $featured) {
-$featured = array_map('str_getcsv', file($sdir . "/featured.csv"));
-?>
-<div class="row">
-  <div class="col-md-8 col-md-offset-2">
-  <h3>Featured</h3>
-<?php
-foreach ($featured as $feature) {
-  if ($feature[0] == "title" || $feature[0] == "")
-    continue;
+// Prepare featured items if on home page
+$featuredItems = array();
+if ($path == "" && $hasFeatured) {
+    $featuredData = array_map('str_getcsv', file($sdir . "/featured.csv"));
+    foreach ($featuredData as $feature) {
+        if ($feature[0] == "title" || $feature[0] == "") {
+            continue;
+        }
+        $featuredItems[] = array(
+            'title' => htmlspecialchars($feature[0]),
+            'link' => cleanURL($feature[1]),
+            'image' => cleanURL($feature[2]),
+            'pastor' => htmlspecialchars($feature[3])
+        );
+    }
+}
 
-?>
-   <div class="cover">
-      <a href="<?php echo cleanURL($feature[1]); ?>">
-      <img src="<?php echo cleanURL($feature[2]); ?>" width="100%" height="100%" alt="<?php echo htmlspecialchars($feature[0]); ?>" />
-      <span class="info title">
-      <?php echo htmlspecialchars($feature[0]); ?>
-      </span>
-      <span class="info pastor">
-      <?php echo htmlspecialchars($feature[3]); ?>
-      </span>
-    </a>
-  </div>
-<?php } ?>
+// Build the file/directory listing
+$listingRows = array();
+$increment = $allDirs ? 2 : 1;
 
-  </div>
-</div>
+for ($i = 0; $i < count($items); $i += $increment) {
+    // Skip items that need skipping
+    while ($i < count($items) && shouldSkipItem($items[$i])) {
+        $i++;
+    }
 
-<?php } ?>
-
-<div class="row">
-
-<div class="col-md-8 col-md-offset-2">
-
-<table class="table table-striped">
-<thead>
-<?php if ($allDirs) { ?>
-<tr><th class="col-md-1"></th><th class="col-md-5">Title</th><th class="col-md-1"></th><th class="col-md-5">Title</th></tr>
-<?php } else { ?>
-<tr><th></th><th>Title</th><th>Comments</th><th>Pastor/Artist</th></tr>
-<?php } ?>
-</thead><tbody>
-
-<?php
-if ($allDirs) { $inc=2; } else { $inc = 1; }
-for ($i = 0; $i < count($items); $i+=$inc ) {
-  //skip files that need skipping.
-  while ($items[$i] == "." || $items[$i] == ".." || $items[$i] == "readme.md" || $items[$i] == "featured.csv" || endsWith($items[$i], ".jpg") || startsWith($items[$i], ".") || $items[$i] == "robots.txt") {
-    $i+=1;
-  }
-
-  //If we've exceeded the number of items, stop.
-  if ($i >= count($items)) {
-    break;
-  }
-
-  //if the element we're working with now is a directory, treat it as such.
-  if (is_dir($sdir . $path . "/" . $items[$i])) {
-  ?>
-    <tr>
-      <td><span class="glyphicon glyphicon-folder-close"></span></td>
-      <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i]) . "\">" . $items[$i] . "</a>"; ?> </td>
-<?php if ($allDirs) {
-      //more skipping.
-      while ($items[$i+1] == "." || $items[$i+1] == ".." || $items[$i+1] == "readme.md" || $items[$i+1] == "featured.csv" || endsWith($items[$i+1], ".jpg") || startsWith($items[$i+1], ".") || $items[$i+1] == "robots.txt") {
-        $i+=1;
-      }
-      if ($i >= count($items)) {
+    if ($i >= count($items)) {
         break;
-      }
+    }
 
-      //if we have another item to do.
-      if (count($items) != $i+1) { ?><td><span class="glyphicon glyphicon-folder-close"></span></td>
-        <td><?php echo "<a href=\"" . cleanURL($path) . cleanURL($items[$i+1]) . "\">" . $items[$i+1] . "</a>"; ?> </td>
-      <?php }
-      //if we don't have more items to deal with, we just fill it with empty space.
-      else
-      { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }}
-  //if we're not dealing with all directories, we fill the remaining columns with empty spaace for directories.
-    else { ?> <td>&nbsp;</td><td>&nbsp; </td> <?php }  ?> </tr> <?php
-  }
-  //if it's not a directory, we treat it as a file.
-  else {
-  $file = $sdir . $path . "/" . $items[$i];
-  if (pathinfo($file, PATHINFO_EXTENSION) == "mp3") {
-    $info = $getID3->analyze($sdir . $path . "/" . $items[$i]);
-  }
-  // otherwise we don't have info.
-  else
-    $info = null;
+    $row = array();
+    $currentItem = $items[$i];
+    $isDirectory = is_dir($sdir . $path . "/" . $currentItem);
 
-  //Here's the code for outputting a single file.
-?>
-  <tr>
-    <td><span class="glyphicon glyphicon-play"></span></td>
-    <td><?php if ($info != null && array_key_exists(0, $info['tags']['id3v2']['title'])) {
-    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($info['tags']['id3v2']['title'][0]) . "</a>";
-    } else if ($info != null && array_key_exists(0, $info['tags']['id3v1']['title'])) {
-    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($info['tags']['id3v1']['title'][0]) . "</a>";
+    if ($isDirectory) {
+        // Directory entry
+        $row['type'] = 'directory';
+        $row['link'] = cleanURL($path) . cleanURL($currentItem);
+        $row['name'] = $currentItem;
+
+        if ($allDirs) {
+            // Find the next valid item for second column
+            $nextIndex = $i + 1;
+            while ($nextIndex < count($items) && shouldSkipItem($items[$nextIndex])) {
+                $nextIndex++;
+            }
+
+            if ($nextIndex < count($items)) {
+                $row['second_link'] = cleanURL($path) . cleanURL($items[$nextIndex]);
+                $row['second_name'] = $items[$nextIndex];
+                // Adjust i to skip items we've processed
+                $i = $nextIndex - 1; // -1 because loop will add $increment
+            } else {
+                $row['second_link'] = null;
+                $row['second_name'] = null;
+            }
+        }
     } else {
-    echo "<a href=\"/sermons" . cleanURL($path) . cleanURL($items[$i]) . "\">" . htmlspecialchars($items[$i]) . "</a>"; } ?> </td>
-    <td>
-    <?php
-    if ($info != null && array_key_exists(0, $info['tags']['id3v2']['comment'])) {
-      echo htmlspecialchars($info['tags']['id3v2']['comment'][0]);
-    } else if ($info != null && array_key_exists(0, $info['tags']['id3v1']['comment'])) {
-      echo htmlspecialchars($info['tags']['id3v1']['comment'][0]);
-    } ?>
-    </td>
-    <td>
-    <?php
-    if ($info != null && array_key_exists(0, $info['tags']['id3v2']['artist'])) {
-      echo htmlspecialchars($info['tags']['id3v2']['artist'][0]);
-    } else if ($info != null && array_key_exists(0, $info['tags']['id3v1']['artist'])) {
-      echo htmlspecialchars($info['tags']['id3v1']['artist'][0]);
-    } ?>
-  </tr>
+        // File entry
+        $row['type'] = 'file';
+        $file = $sdir . $path . "/" . $currentItem;
 
+        $info = null;
+        if (pathinfo($file, PATHINFO_EXTENSION) == "mp3") {
+            $info = $getID3->analyze($file);
+        }
 
+        $title = getID3TagPreferV2($info, 'title');
+        if ($title === null) {
+            $title = $currentItem;
+        }
 
-<?php }}?>
-</tbody></table>
-</div>
+        $row['link'] = "/sermons" . cleanURL($path) . cleanURL($currentItem);
+        $row['title'] = htmlspecialchars($title);
+        $row['comment'] = htmlspecialchars(getID3TagPreferV2($info, 'comment') ?? '');
+        $row['artist'] = htmlspecialchars(getID3TagPreferV2($info, 'artist') ?? '');
+    }
 
-</div>
-</div>
-<div class="footer">
-  <div class="container">
-    <p class="text-muted"><a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> :: Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> :: <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?php echo cleanURL($path); ?>">Valid XHTML</a></p>
-  </div>
-</div>
-</body>
-</html>
+    $listingRows[] = $row;
+}
+
+// ============================================================================
+// HTML TEMPLATE
+// ============================================================================
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- <?php var_dump($debugTokens); echo $debugTokenCount . $debugLastToken . " - "; ?> -->
+    <title><?php echo $pageTitle; ?> Sermon Archive</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+
+    <!-- jQuery and Bootstrap JS -->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/style.css" />
+
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-47721127-4', 'auto');
+        ga('send', 'pageview');
+    </script>
+</head>
+<body>
+    <div class="content-fluid">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h1><?php echo $pageTitle; ?>SPEP Sermon Archive</h1>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Navigation -->
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h4><?php echo $breadcrumbHtml; ?></h4>
+            </div>
+        </div>
+
+        <!-- Readme Section -->
+        <?php if ($hasReadme): ?>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="well well-sm">
+                    <?php echo $readmeHtml; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Featured Section -->
+        <?php if (!empty($featuredItems)): ?>
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h3>Featured</h3>
+                <?php foreach ($featuredItems as $feature): ?>
+                <div class="cover">
+                    <a href="<?php echo $feature['link']; ?>">
+                        <img src="<?php echo $feature['image']; ?>" width="100%" height="100%" alt="<?php echo $feature['title']; ?>" />
+                        <span class="info title"><?php echo $feature['title']; ?></span>
+                        <span class="info pastor"><?php echo $feature['pastor']; ?></span>
+                    </a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- File/Directory Listing -->
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <table class="table table-striped">
+                    <thead>
+                        <?php if ($allDirs): ?>
+                        <tr>
+                            <th class="col-md-1"></th>
+                            <th class="col-md-5">Title</th>
+                            <th class="col-md-1"></th>
+                            <th class="col-md-5">Title</th>
+                        </tr>
+                        <?php else: ?>
+                        <tr>
+                            <th></th>
+                            <th>Title</th>
+                            <th>Comments</th>
+                            <th>Pastor/Artist</th>
+                        </tr>
+                        <?php endif; ?>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($listingRows as $row): ?>
+                            <?php if ($row['type'] == 'directory'): ?>
+                            <tr>
+                                <td><span class="glyphicon glyphicon-folder-close"></span></td>
+                                <td><a href="<?php echo $row['link']; ?>"><?php echo $row['name']; ?></a></td>
+                                <?php if ($allDirs): ?>
+                                    <?php if ($row['second_name'] !== null): ?>
+                                    <td><span class="glyphicon glyphicon-folder-close"></span></td>
+                                    <td><a href="<?php echo $row['second_link']; ?>"><?php echo $row['second_name']; ?></a></td>
+                                    <?php else: ?>
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <?php endif; ?>
+                            </tr>
+                            <?php else: ?>
+                            <tr>
+                                <td><span class="glyphicon glyphicon-play"></span></td>
+                                <td><a href="<?php echo $row['link']; ?>"><?php echo $row['title']; ?></a></td>
+                                <td><?php echo $row['comment']; ?></td>
+                                <td><?php echo $row['artist']; ?></td>
+                            </tr>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container">
+            <p class="text-muted">
+                <a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> ::
+                Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> ::
+                <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?php echo cleanURL($path); ?>">Valid XHTML</a>
+            </p>
+        </div>
+    </div>
 
 <!--Debug info goes here
 <?php
@@ -303,3 +397,5 @@ echo cleanURL($path);
 echo "\n";
 ?>
 /debug-->
+</body>
+</html>
