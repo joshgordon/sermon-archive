@@ -1,11 +1,11 @@
 <?php
+
 /////////////////////////////////////////////////////////////////
 /// getID3() by James Heinrich <info@getid3.org>               //
-//  available at http://getid3.sourceforge.net                 //
-//            or http://www.getid3.org                         //
-//          also https://github.com/JamesHeinrich/getID3       //
-/////////////////////////////////////////////////////////////////
-// See readme.txt for more details                             //
+//  available at https://github.com/JamesHeinrich/getID3       //
+//            or https://www.getid3.org                        //
+//            or http://getid3.sourceforge.net                 //
+//  see readme.txt for more details                            //
 /////////////////////////////////////////////////////////////////
 //                                                             //
 // module.audio.ogg.php                                        //
@@ -14,11 +14,18 @@
 //                                                            ///
 /////////////////////////////////////////////////////////////////
 
+if (!defined('GETID3_INCLUDEPATH')) { // prevent path-exposing attacks that access modules directly on public webservers
+	exit;
+}
 getid3_lib::IncludeDependency(GETID3_INCLUDEPATH.'module.audio.flac.php', __FILE__, true);
 
 class getid3_ogg extends getid3_handler
 {
-	// http://xiph.org/vorbis/doc/Vorbis_I_spec.html
+	/**
+	 * @link http://xiph.org/vorbis/doc/Vorbis_I_spec.html
+	 *
+	 * @return bool
+	 */
 	public function Analyze() {
 		$info = &$this->getid3->info;
 
@@ -26,13 +33,13 @@ class getid3_ogg extends getid3_handler
 
 		// Warn about illegal tags - only vorbiscomments are allowed
 		if (isset($info['id3v2'])) {
-			$info['warning'][] = 'Illegal ID3v2 tag present.';
+			$this->warning('Illegal ID3v2 tag present.');
 		}
 		if (isset($info['id3v1'])) {
-			$info['warning'][] = 'Illegal ID3v1 tag present.';
+			$this->warning('Illegal ID3v1 tag present.');
 		}
 		if (isset($info['ape'])) {
-			$info['warning'][] = 'Illegal APE tag present.';
+			$this->warning('Illegal APE tag present.');
 		}
 
 
@@ -44,7 +51,7 @@ class getid3_ogg extends getid3_handler
 		$info['ogg']['pageheader'][$oggpageinfo['page_seqno']] = $oggpageinfo;
 
 		if ($this->ftell() >= $this->getid3->fread_buffer_size()) {
-			$info['error'][] = 'Could not find start of Ogg page in the first '.$this->getid3->fread_buffer_size().' bytes (this might not be an Ogg-Vorbis file?)';
+			$this->error('Could not find start of Ogg page in the first '.$this->getid3->fread_buffer_size().' bytes (this might not be an Ogg-Vorbis file?)');
 			unset($info['fileformat']);
 			unset($info['ogg']);
 			return false;
@@ -62,6 +69,12 @@ class getid3_ogg extends getid3_handler
 		} elseif (substr($filedata, 1, 6) == 'vorbis') {
 
 			$this->ParseVorbisPageHeader($filedata, $filedataoffset, $oggpageinfo);
+
+		} elseif (substr($filedata, 0, 8) == 'OpusHead') {
+
+			if ($this->ParseOpusPageHeader($filedata, $filedataoffset, $oggpageinfo) === false) {
+				return false;
+			}
 
 		} elseif (substr($filedata, 0, 8) == 'Speex   ') {
 
@@ -173,7 +186,7 @@ class getid3_ogg extends getid3_handler
 			if ($info['ogg']['pageheader']['theora']['pixel_aspect_denominator'] > 0) {
 				$info['video']['pixel_aspect_ratio'] = (float) $info['ogg']['pageheader']['theora']['pixel_aspect_numerator'] / $info['ogg']['pageheader']['theora']['pixel_aspect_denominator'];
 			}
-$info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of getID3 ['.$this->getid3->version().'] -- bitrate, playtime and all audio data are currently unavailable';
+$this->warning('Ogg Theora (v3) not fully supported in this version of getID3 ['.$this->getid3->version().'] -- bitrate, playtime and all audio data are currently unavailable');
 
 
 		} elseif (substr($filedata, 0, 8) == "fishead\x00") {
@@ -197,8 +210,8 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 			$filedataoffset += 20;
 
 			$info['ogg']['skeleton']['fishead']['version']          = $info['ogg']['skeleton']['fishead']['raw']['version_major'].'.'.$info['ogg']['skeleton']['fishead']['raw']['version_minor'];
-			$info['ogg']['skeleton']['fishead']['presentationtime'] = $info['ogg']['skeleton']['fishead']['raw']['presentationtime_numerator'] / $info['ogg']['skeleton']['fishead']['raw']['presentationtime_denominator'];
-			$info['ogg']['skeleton']['fishead']['basetime']         = $info['ogg']['skeleton']['fishead']['raw']['basetime_numerator']         / $info['ogg']['skeleton']['fishead']['raw']['basetime_denominator'];
+			$info['ogg']['skeleton']['fishead']['presentationtime'] = getid3_lib::SafeDiv($info['ogg']['skeleton']['fishead']['raw']['presentationtime_numerator'], $info['ogg']['skeleton']['fishead']['raw']['presentationtime_denominator']);
+			$info['ogg']['skeleton']['fishead']['basetime']         = getid3_lib::SafeDiv($info['ogg']['skeleton']['fishead']['raw']['basetime_numerator'],         $info['ogg']['skeleton']['fishead']['raw']['basetime_denominator']);
 			$info['ogg']['skeleton']['fishead']['utc']              = $info['ogg']['skeleton']['fishead']['raw']['utc'];
 
 
@@ -234,7 +247,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 				} elseif (substr($filedata, 1, 6) == 'theora') {
 
 					$info['video']['dataformat'] = 'theora1';
-					$info['error'][] = 'Ogg Theora (v1) not correctly handled in this version of getID3 ['.$this->getid3->version().']';
+					$this->error('Ogg Theora (v1) not correctly handled in this version of getID3 ['.$this->getid3->version().']');
 					//break;
 
 				} elseif (substr($filedata, 1, 6) == 'vorbis') {
@@ -242,7 +255,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 					$this->ParseVorbisPageHeader($filedata, $filedataoffset, $oggpageinfo);
 
 				} else {
-					$info['error'][] = 'unexpected';
+					$this->error('unexpected');
 					//break;
 				}
 			//} while ($oggpageinfo['page_seqno'] == 0);
@@ -250,12 +263,37 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 
 			$this->fseek($oggpageinfo['page_start_offset']);
 
-			$info['error'][] = 'Ogg Skeleton not correctly handled in this version of getID3 ['.$this->getid3->version().']';
+			$this->error('Ogg Skeleton not correctly handled in this version of getID3 ['.$this->getid3->version().']');
 			//return false;
+
+		} elseif (substr($filedata, 0, 5) == "\x7F".'FLAC') {
+			// https://xiph.org/flac/ogg_mapping.html
+
+			$info['audio']['dataformat']   = 'flac';
+			$info['audio']['bitrate_mode'] = 'vbr';
+			$info['audio']['lossless']     = true;
+
+			$info['ogg']['flac']['header']['version_major']  =                         ord(substr($filedata,  5, 1));
+			$info['ogg']['flac']['header']['version_minor']  =                         ord(substr($filedata,  6, 1));
+			$info['ogg']['flac']['header']['header_packets'] =   getid3_lib::BigEndian2Int(substr($filedata,  7, 2)) + 1; // "A two-byte, big-endian binary number signifying the number of header (non-audio) packets, not including this one. This number may be zero (0x0000) to signify 'unknown' but be aware that some decoders may not be able to handle such streams."
+			$info['ogg']['flac']['header']['magic']          =                             substr($filedata,  9, 4);
+			if ($info['ogg']['flac']['header']['magic'] != 'fLaC') {
+				$this->error('Ogg-FLAC expecting "fLaC", found "'.$info['ogg']['flac']['header']['magic'].'" ('.trim(getid3_lib::PrintHexBytes($info['ogg']['flac']['header']['magic'])).')');
+				return false;
+			}
+			$info['ogg']['flac']['header']['STREAMINFO_bytes'] = getid3_lib::BigEndian2Int(substr($filedata, 13, 4));
+			$info['flac']['STREAMINFO'] = getid3_flac::parseSTREAMINFOdata(substr($filedata, 17, 34));
+			if (!empty($info['flac']['STREAMINFO']['sample_rate'])) {
+				$info['audio']['bitrate_mode']    = 'vbr';
+				$info['audio']['sample_rate']     = $info['flac']['STREAMINFO']['sample_rate'];
+				$info['audio']['channels']        = $info['flac']['STREAMINFO']['channels'];
+				$info['audio']['bits_per_sample'] = $info['flac']['STREAMINFO']['bits_per_sample'];
+				$info['playtime_seconds']         = getid3_lib::SafeDiv($info['flac']['STREAMINFO']['samples_stream'], $info['flac']['STREAMINFO']['sample_rate']);
+			}
 
 		} else {
 
-			$info['error'][] = 'Expecting either "Speex   " or "vorbis" identifier strings, found "'.substr($filedata, 0, 8).'"';
+			$this->error('Expecting one of "vorbis", "Speex", "OpusHead", "vorbis", "fishhead", "theora", "fLaC" identifier strings, found "'.substr($filedata, 0, 8).'"');
 			unset($info['ogg']);
 			unset($info['mime_type']);
 			return false;
@@ -278,7 +316,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 			case 'flac':
 				$flac = new getid3_flac($this->getid3);
 				if (!$flac->parseMETAdata()) {
-					$info['error'][] = 'Failed to parse FLAC headers';
+					$this->error('Failed to parse FLAC headers');
 					return false;
 				}
 				unset($flac);
@@ -288,29 +326,46 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 				$this->fseek($info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_length'], SEEK_CUR);
 				$this->ParseVorbisComments();
 				break;
-		}
 
+			case 'opus':
+				$filedata = $this->fread($info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_length']);
+				$info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['stream_type'] = substr($filedata, 0, 8); // hard-coded to 'OpusTags'
+				if(substr($filedata, 0, 8)  != 'OpusTags') {
+					$this->error('Expected "OpusTags" as header but got "'.substr($filedata, 0, 8).'"');
+					return false;
+				}
+
+				$this->ParseVorbisComments();
+				break;
+
+		}
 
 		// Last Page - Number of Samples
 		if (!getid3_lib::intValueSupported($info['avdataend'])) {
 
-			$info['warning'][] = 'Unable to parse Ogg end chunk file (PHP does not support file operations beyond '.round(PHP_INT_MAX / 1073741824).'GB)';
+			$this->warning('Unable to parse Ogg end chunk file (PHP does not support file operations beyond '.round(PHP_INT_MAX / 1073741824).'GB)');
 
 		} else {
 
 			$this->fseek(max($info['avdataend'] - $this->getid3->fread_buffer_size(), 0));
 			$LastChunkOfOgg = strrev($this->fread($this->getid3->fread_buffer_size()));
 			if ($LastOggSpostion = strpos($LastChunkOfOgg, 'SggO')) {
+				if (substr($LastChunkOfOgg, 13, 8) === "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF") {
+					// https://github.com/JamesHeinrich/getID3/issues/450
+					// "Sometimes, Opus encoders (WhatsApp voice registrations and others) add a special last header with a granule duration of 0xFFFFFFFFFFFFFF.
+					// This value indicates "this is the end," but must be ignored; otherwise, it makes calculations wrong."
+					$LastOggSpostion = strpos($LastChunkOfOgg, 'SggO', $LastOggSpostion + 1);
+				}
 				$this->fseek($info['avdataend'] - ($LastOggSpostion + strlen('SggO')));
 				$info['avdataend'] = $this->ftell();
 				$info['ogg']['pageheader']['eos'] = $this->ParseOggPageHeader();
 				$info['ogg']['samples']   = $info['ogg']['pageheader']['eos']['pcm_abs_position'];
 				if ($info['ogg']['samples'] == 0) {
-					$info['error'][] = 'Corrupt Ogg file: eos.number of samples == zero';
+					$this->error('Corrupt Ogg file: eos.number of samples == zero');
 					return false;
 				}
 				if (!empty($info['audio']['sample_rate'])) {
-					$info['ogg']['bitrate_average'] = (($info['avdataend'] - $info['avdataoffset']) * 8) / ($info['ogg']['samples'] / $info['audio']['sample_rate']);
+					$info['ogg']['bitrate_average'] = (($info['avdataend'] - $info['avdataoffset']) * 8) * $info['audio']['sample_rate'] / $info['ogg']['samples'];
 				}
 			}
 
@@ -325,7 +380,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		}
 		if (isset($info['audio']['bitrate']) && !isset($info['playtime_seconds'])) {
 			if ($info['audio']['bitrate'] == 0) {
-				$info['error'][] = 'Corrupt Ogg file: bitrate_audio == zero';
+				$this->error('Corrupt Ogg file: bitrate_audio == zero');
 				return false;
 			}
 			$info['playtime_seconds'] = (float) ((($info['avdataend'] - $info['avdataoffset']) * 8) / $info['audio']['bitrate']);
@@ -361,6 +416,13 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return true;
 	}
 
+	/**
+	 * @param string $filedata
+	 * @param int    $filedataoffset
+	 * @param array  $oggpageinfo
+	 *
+	 * @return bool
+	 */
 	public function ParseVorbisPageHeader(&$filedata, &$filedataoffset, &$oggpageinfo) {
 		$info = &$this->getid3->info;
 		$info['audio']['dataformat'] = 'vorbis';
@@ -378,7 +440,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		$info['ogg']['samplerate']       = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset, 4));
 		$filedataoffset += 4;
 		if ($info['ogg']['samplerate'] == 0) {
-			$info['error'][] = 'Corrupt Ogg file: sample rate == zero';
+			$this->error('Corrupt Ogg file: sample rate == zero');
 			return false;
 		}
 		$info['audio']['sample_rate']    = $info['ogg']['samplerate'];
@@ -409,19 +471,82 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return true;
 	}
 
+	/**
+	 * @link http://tools.ietf.org/html/draft-ietf-codec-oggopus-03
+	 *
+	 * @param string $filedata
+	 * @param int    $filedataoffset
+	 * @param array  $oggpageinfo
+	 *
+	 * @return bool
+	 */
+	public function ParseOpusPageHeader(&$filedata, &$filedataoffset, &$oggpageinfo) {
+		$info = &$this->getid3->info;
+		$info['audio']['dataformat']   = 'opus';
+		$info['mime_type']             = 'audio/ogg; codecs=opus';
+
+		/** @todo find a usable way to detect abr (vbr that is padded to be abr) */
+		$info['audio']['bitrate_mode'] = 'vbr';
+
+		$info['audio']['lossless']     = false;
+
+		$info['ogg']['pageheader']['opus']['opus_magic'] = substr($filedata, $filedataoffset, 8); // hard-coded to 'OpusHead'
+		$filedataoffset += 8;
+		$info['ogg']['pageheader']['opus']['version']    = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset,  1));
+		$filedataoffset += 1;
+
+		if ($info['ogg']['pageheader']['opus']['version'] < 1 || $info['ogg']['pageheader']['opus']['version'] > 15) {
+			$this->error('Unknown opus version number (only accepting 1-15)');
+			return false;
+		}
+
+		$info['ogg']['pageheader']['opus']['out_channel_count'] = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset,  1));
+		$filedataoffset += 1;
+
+		if ($info['ogg']['pageheader']['opus']['out_channel_count'] == 0) {
+			$this->error('Invalid channel count in opus header (must not be zero)');
+			return false;
+		}
+
+		$info['ogg']['pageheader']['opus']['pre_skip'] = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset,  2));
+		$filedataoffset += 2;
+
+		$info['ogg']['pageheader']['opus']['input_sample_rate'] = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset,  4));
+		$filedataoffset += 4;
+
+		//$info['ogg']['pageheader']['opus']['output_gain'] = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset,  2));
+		//$filedataoffset += 2;
+
+		//$info['ogg']['pageheader']['opus']['channel_mapping_family'] = getid3_lib::LittleEndian2Int(substr($filedata, $filedataoffset,  1));
+		//$filedataoffset += 1;
+
+		$info['opus']['opus_version']       = $info['ogg']['pageheader']['opus']['version'];
+		$info['opus']['sample_rate_input']  = $info['ogg']['pageheader']['opus']['input_sample_rate'];
+		$info['opus']['out_channel_count']  = $info['ogg']['pageheader']['opus']['out_channel_count'];
+
+		$info['audio']['channels']          = $info['opus']['out_channel_count'];
+		$info['audio']['sample_rate_input'] = $info['opus']['sample_rate_input'];
+		$info['audio']['sample_rate']       = 48000; // "All Opus audio is coded at 48 kHz, and should also be decoded at 48 kHz for playback (unless the target hardware does not support this sampling rate). However, this field may be used to resample the audio back to the original sampling rate, for example, when saving the output to a file." -- https://mf4.xiph.org/jenkins/view/opus/job/opusfile-unix/ws/doc/html/structOpusHead.html
+		return true;
+	}
+
+	/**
+	 * @return array|false
+	 */
 	public function ParseOggPageHeader() {
 		// http://xiph.org/ogg/vorbis/doc/framing.html
+		$oggheader = array();
 		$oggheader['page_start_offset'] = $this->ftell(); // where we started from in the file
 
 		$filedata = $this->fread($this->getid3->fread_buffer_size());
 		$filedataoffset = 0;
-		while ((substr($filedata, $filedataoffset++, 4) != 'OggS')) {
+		while (substr($filedata, $filedataoffset++, 4) != 'OggS') {
 			if (($this->ftell() - $oggheader['page_start_offset']) >= $this->getid3->fread_buffer_size()) {
 				// should be found before here
 				return false;
 			}
-			if ((($filedataoffset + 28) > strlen($filedata)) || (strlen($filedata) < 28)) {
-				if ($this->feof() || (($filedata .= $this->fread($this->getid3->fread_buffer_size())) === false)) {
+			if (($filedataoffset + 28) > strlen($filedata)) {
+				if ($this->feof() || (($filedata .= $this->fread($this->getid3->fread_buffer_size())) === '')) {
 					// get some more data, unless eof, in which case fail
 					return false;
 				}
@@ -460,17 +585,24 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return $oggheader;
 	}
 
-    // http://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-810005
+	/**
+	 * @link http://xiph.org/vorbis/doc/Vorbis_I_spec.html#x1-810005
+	 *
+	 * @return bool
+	 */
 	public function ParseVorbisComments() {
 		$info = &$this->getid3->info;
 
 		$OriginalOffset = $this->ftell();
+		$commentdata = null;
 		$commentdataoffset = 0;
 		$VorbisCommentPage = 1;
+		$CommentStartOffset = 0;
 
 		switch ($info['audio']['dataformat']) {
 			case 'vorbis':
 			case 'speex':
+			case 'opus':
 				$CommentStartOffset = $info['ogg']['pageheader'][$VorbisCommentPage]['page_start_offset'];  // Second Ogg page, after header block
 				$this->fseek($CommentStartOffset);
 				$commentdataoffset = 27 + $info['ogg']['pageheader'][$VorbisCommentPage]['page_segments'];
@@ -479,6 +611,10 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 				if ($info['audio']['dataformat'] == 'vorbis') {
 					$commentdataoffset += (strlen('vorbis') + 1);
 				}
+				else if ($info['audio']['dataformat'] == 'opus') {
+					$commentdataoffset += strlen('OpusTags');
+				}
+
 				break;
 
 			case 'flac':
@@ -504,6 +640,12 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		$basicfields = array('TITLE', 'ARTIST', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'DESCRIPTION', 'COMMENT');
 		$ThisFileInfo_ogg_comments_raw = &$info['ogg']['comments_raw'];
 		for ($i = 0; $i < $CommentsCount; $i++) {
+
+			if ($i >= 10000) {
+				// https://github.com/owncloud/music/issues/212#issuecomment-43082336
+				$this->warning('Unexpectedly large number ('.$CommentsCount.') of Ogg comments - breaking after reading '.$i.' comments');
+				break;
+			}
 
 			$ThisFileInfo_ogg_comments_raw[$i]['dataoffset'] = $CommentStartOffset + $commentdataoffset;
 
@@ -539,41 +681,45 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 			$commentdataoffset += 4;
 			while ((strlen($commentdata) - $commentdataoffset) < $ThisFileInfo_ogg_comments_raw[$i]['size']) {
 				if (($ThisFileInfo_ogg_comments_raw[$i]['size'] > $info['avdataend']) || ($ThisFileInfo_ogg_comments_raw[$i]['size'] < 0)) {
-					$info['warning'][] = 'Invalid Ogg comment size (comment #'.$i.', claims to be '.number_format($ThisFileInfo_ogg_comments_raw[$i]['size']).' bytes) - aborting reading comments';
+					$this->warning('Invalid Ogg comment size (comment #'.$i.', claims to be '.number_format($ThisFileInfo_ogg_comments_raw[$i]['size']).' bytes) - aborting reading comments');
 					break 2;
 				}
 
 				$VorbisCommentPage++;
 
-				$oggpageinfo = $this->ParseOggPageHeader();
-				$info['ogg']['pageheader'][$oggpageinfo['page_seqno']] = $oggpageinfo;
+				if ($oggpageinfo = $this->ParseOggPageHeader()) {
+					$info['ogg']['pageheader'][$oggpageinfo['page_seqno']] = $oggpageinfo;
 
-				// First, save what we haven't read yet
-				$AsYetUnusedData = substr($commentdata, $commentdataoffset);
+					// First, save what we haven't read yet
+					$AsYetUnusedData = substr($commentdata, $commentdataoffset);
 
-				// Then take that data off the end
-				$commentdata     = substr($commentdata, 0, $commentdataoffset);
+					// Then take that data off the end
+					$commentdata     = substr($commentdata, 0, $commentdataoffset);
 
-				// Add [headerlength] bytes of dummy data for the Ogg Page Header, just to keep absolute offsets correct
-				$commentdata .= str_repeat("\x00", 27 + $info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_segments']);
-				$commentdataoffset += (27 + $info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_segments']);
+					// Add [headerlength] bytes of dummy data for the Ogg Page Header, just to keep absolute offsets correct
+					$commentdata .= str_repeat("\x00", 27 + $info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_segments']);
+					$commentdataoffset += (27 + $info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_segments']);
 
-				// Finally, stick the unused data back on the end
-				$commentdata .= $AsYetUnusedData;
+					// Finally, stick the unused data back on the end
+					$commentdata .= $AsYetUnusedData;
 
-				//$commentdata .= $this->fread($info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_length']);
-				if (!isset($info['ogg']['pageheader'][$VorbisCommentPage])) {
-					$info['warning'][] = 'undefined Vorbis Comment page "'.$VorbisCommentPage.'" at offset '.$this->ftell();
+					//$commentdata .= $this->fread($info['ogg']['pageheader'][$oggpageinfo['page_seqno']]['page_length']);
+					if (!isset($info['ogg']['pageheader'][$VorbisCommentPage])) {
+						$this->warning('undefined Vorbis Comment page "'.$VorbisCommentPage.'" at offset '.$this->ftell());
+						break;
+					}
+					$readlength = self::OggPageSegmentLength($info['ogg']['pageheader'][$VorbisCommentPage], 1);
+					if ($readlength <= 0) {
+						$this->warning('invalid length Vorbis Comment page "'.$VorbisCommentPage.'" at offset '.$this->ftell());
+						break;
+					}
+					$commentdata .= $this->fread($readlength);
+
+					//$filebaseoffset += $oggpageinfo['header_end_offset'] - $oggpageinfo['page_start_offset'];
+				} else {
+					$this->warning('failed to ParseOggPageHeader() at offset '.$this->ftell());
 					break;
 				}
-				$readlength = self::OggPageSegmentLength($info['ogg']['pageheader'][$VorbisCommentPage], 1);
-				if ($readlength <= 0) {
-					$info['warning'][] = 'invalid length Vorbis Comment page "'.$VorbisCommentPage.'" at offset '.$this->ftell();
-					break;
-				}
-				$commentdata .= $this->fread($readlength);
-
-				//$filebaseoffset += $oggpageinfo['header_end_offset'] - $oggpageinfo['page_start_offset'];
 			}
 			$ThisFileInfo_ogg_comments_raw[$i]['offset'] = $commentdataoffset;
 			$commentstring = substr($commentdata, $commentdataoffset, $ThisFileInfo_ogg_comments_raw[$i]['size']);
@@ -582,7 +728,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 			if (!$commentstring) {
 
 				// no comment?
-				$info['warning'][] = 'Blank Ogg comment ['.$i.']';
+				$this->warning('Blank Ogg comment ['.$i.']');
 
 			} elseif (strstr($commentstring, '=')) {
 
@@ -615,8 +761,12 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 					$ogg = new self($this->getid3);
 					$ogg->setStringMode($data);
 					$info['ogg']['comments']['picture'][] = array(
-						'image_mime' => $imageinfo['mime'],
-						'data'       => $ogg->saveAttachment('coverart', 0, strlen($data), $imageinfo['mime']),
+						'image_mime'   => $imageinfo['mime'],
+						'datalength'   => strlen($data),
+						'picturetype'  => 'cover art',
+						'image_height' => $imageinfo['height'],
+						'image_width'  => $imageinfo['width'],
+						'data'         => $ogg->saveAttachment('coverart', 0, strlen($data), $imageinfo['mime']),
 					);
 					unset($ogg);
 
@@ -628,7 +778,7 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 
 			} else {
 
-				$info['warning'][] = '[known problem with CDex >= v1.40, < v1.50b7] Invalid Ogg comment name/value pair ['.$i.']: '.$commentstring;
+				$this->warning('[known problem with CDex >= v1.40, < v1.50b7] Invalid Ogg comment name/value pair ['.$i.']: '.$commentstring);
 
 			}
 			unset($ThisFileInfo_ogg_comments_raw[$i]);
@@ -643,29 +793,29 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 				switch ($index) {
 					case 'rg_audiophile':
 					case 'replaygain_album_gain':
-						$info['replay_gain']['album']['adjustment'] = (double) $commentvalue[0];
+						$info['replay_gain']['album']['adjustment'] = (float) $commentvalue[0];
 						unset($info['ogg']['comments'][$index]);
 						break;
 
 					case 'rg_radio':
 					case 'replaygain_track_gain':
-						$info['replay_gain']['track']['adjustment'] = (double) $commentvalue[0];
+						$info['replay_gain']['track']['adjustment'] = (float) $commentvalue[0];
 						unset($info['ogg']['comments'][$index]);
 						break;
 
 					case 'replaygain_album_peak':
-						$info['replay_gain']['album']['peak'] = (double) $commentvalue[0];
+						$info['replay_gain']['album']['peak'] = (float) $commentvalue[0];
 						unset($info['ogg']['comments'][$index]);
 						break;
 
 					case 'rg_peak':
 					case 'replaygain_track_peak':
-						$info['replay_gain']['track']['peak'] = (double) $commentvalue[0];
+						$info['replay_gain']['track']['peak'] = (float) $commentvalue[0];
 						unset($info['ogg']['comments'][$index]);
 						break;
 
 					case 'replaygain_reference_loudness':
-						$info['replay_gain']['reference_volume'] = (double) $commentvalue[0];
+						$info['replay_gain']['reference_volume'] = (float) $commentvalue[0];
 						unset($info['ogg']['comments'][$index]);
 						break;
 
@@ -681,6 +831,11 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return true;
 	}
 
+	/**
+	 * @param int $mode
+	 *
+	 * @return string|null
+	 */
 	public static function SpeexBandModeLookup($mode) {
 		static $SpeexBandModeLookup = array();
 		if (empty($SpeexBandModeLookup)) {
@@ -691,8 +846,14 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return (isset($SpeexBandModeLookup[$mode]) ? $SpeexBandModeLookup[$mode] : null);
 	}
 
-
+	/**
+	 * @param array $OggInfoArray
+	 * @param int   $SegmentNumber
+	 *
+	 * @return int
+	 */
 	public static function OggPageSegmentLength($OggInfoArray, $SegmentNumber=1) {
+		$segmentlength = 0;
 		for ($i = 0; $i < $SegmentNumber; $i++) {
 			$segmentlength = 0;
 			foreach ($OggInfoArray['segment_table'] as $key => $value) {
@@ -705,7 +866,11 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return $segmentlength;
 	}
 
-
+	/**
+	 * @param int $nominal_bitrate
+	 *
+	 * @return float
+	 */
 	public static function get_quality_from_nominal_bitrate($nominal_bitrate) {
 
 		// decrease precision
@@ -729,6 +894,11 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return round($qval, 1); // 5 or 4.9
 	}
 
+	/**
+	 * @param int $colorspace_id
+	 *
+	 * @return string|null
+	 */
 	public static function TheoraColorSpace($colorspace_id) {
 		// http://www.theora.org/doc/Theora.pdf (table 6.3)
 		static $TheoraColorSpaceLookup = array();
@@ -741,6 +911,11 @@ $info['warning'][] = 'Ogg Theora (v3) not fully supported in this version of get
 		return (isset($TheoraColorSpaceLookup[$colorspace_id]) ? $TheoraColorSpaceLookup[$colorspace_id] : null);
 	}
 
+	/**
+	 * @param int $pixelformat_id
+	 *
+	 * @return string|null
+	 */
 	public static function TheoraPixelFormat($pixelformat_id) {
 		// http://www.theora.org/doc/Theora.pdf (table 6.4)
 		static $TheoraPixelFormatLookup = array();

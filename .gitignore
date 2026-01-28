@@ -1,0 +1,20 @@
+# Sample data - keep the readme but ignore actual media files
+sample-data/**
+!sample-data/readme.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+vendor/
+composer.lock
+
+# Configuration (use config.example.php as template)
+config.php

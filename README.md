@@ -1,17 +1,206 @@
-Sermon Archive Web Interface
-============================
+# Sermon Archive Web Interface
 
-This is a dynamic web-interface for your sermon archive (or really any
-directory structure of MP3 files). I've written most of this myself,
-except for the getid3 code. 
+A dynamic web interface for browsing sermon archives (or any directory structure of MP3 files). Automatically reads ID3 tags and renders markdown readme files.
 
-Features
---------
+## Features
 
-- Reads ID3 tags off of MP3 files
-- If a directory has only directories, it turns into a two column
-  layout
-- If a folder contains "readme.md", the markdown will be rendered out
-  on to the webpage. 
+- Reads ID3 tags (title, artist, comment) from MP3 files
+- Two-column layout for directories containing only subdirectories
+- Markdown rendering for `readme.md` files in any directory
+- Featured content section on the home page via `featured.csv`
+- Responsive Bootstrap-based design
+- Pure PHP - no external dependencies required
 
-See a live demo at http://archive.spepmedia.com. The underlying directory structure is exposed at http://archive.spepmedia.com/sermons/
+## Requirements
+
+- PHP 8.0 or higher
+- Web server (Apache, Nginx, etc.)
+
+## Quick Start with Docker
+
+The easiest way to run the archive locally for development:
+
+```bash
+# Clone the repository
+git clone https://github.com/joshgordon/sermon-archive.git
+cd sermon-archive
+
+# Start the development server
+docker compose up
+
+# Visit http://localhost:8080
+```
+
+To use your own sermon files, edit `docker-compose.yml` and update the volume mount:
+
+```yaml
+volumes:
+  - /path/to/your/sermons:/data/spep/spepmedia.com
+```
+
+## Configuration
+
+Copy `config.example.php` to `config.php` and customize the settings:
+
+```php
+return [
+    // Site Settings
+    'site_name' => 'My Church Sermon Archive',
+    'organization_name' => 'My Church',
+    'organization_url' => 'https://mychurch.org',
+
+    // File Paths
+    'data_directory' => '/path/to/sermons/',
+    'media_url_prefix' => '/sermons',
+
+    // Analytics (leave empty to disable)
+    'google_analytics_id' => 'UA-XXXXXXXX-X',
+
+    // Footer Links (set to null to hide)
+    'hosting_provider' => [
+        'name' => 'DigitalOcean',
+        'url' => 'https://digitalocean.com',
+    ],
+    'validator_domain' => 'archive.mychurch.org',
+
+    // Display Options
+    'two_column_min_items' => 6,
+    'skip_files' => ['readme.md', 'featured.csv', 'robots.txt'],
+    'skip_extensions' => ['.jpg'],
+];
+```
+
+### Configuration Options
+
+| Option | Description |
+|--------|-------------|
+| `site_name` | Appears in the page title and header |
+| `organization_name` | Your church/organization name for the footer |
+| `organization_url` | Link to your main website |
+| `data_directory` | Absolute path to sermon files on the server |
+| `media_url_prefix` | URL prefix for direct file links (must match web server config) |
+| `google_analytics_id` | Google Analytics tracking ID (leave empty to disable) |
+| `hosting_provider` | Hosting provider credit in footer (set to `null` to hide) |
+| `validator_domain` | Domain for W3C validator link (set to `null` to hide) |
+| `two_column_min_items` | Minimum items to trigger two-column directory layout |
+| `skip_files` | Filenames to hide from directory listings |
+| `skip_extensions` | File extensions to hide from directory listings |
+
+## Manual Installation
+
+1. Copy all PHP files to your web server document root
+2. Copy `config.example.php` to `config.php` and customize the settings
+3. Configure your web server to route all requests through `index.php`
+
+### Nginx Configuration
+
+See `nginx-config` for a sample Nginx configuration. Key points:
+
+- Route all non-file requests to `index.php`
+- Optionally expose the raw files at `/sermons/` with autoindex
+
+### Apache Configuration
+
+Create a `.htaccess` file in your document root:
+
+```apache
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
+```
+
+## Directory Structure
+
+Organize your sermon files in a hierarchical structure:
+
+```
+/sermons/
+  readme.md              # Optional - rendered on home page
+  featured.csv           # Optional - featured items on home page
+  2024/
+    readme.md            # Optional - rendered when viewing 2024/
+    Spring Series/
+      sermon1.mp3
+      sermon2.mp3
+    Fall Series/
+      sermon1.mp3
+  2023/
+    ...
+```
+
+## Special Files
+
+### readme.md
+
+Place a `readme.md` file in any directory to display formatted content above the file listing. Useful for series descriptions, speaker bios, etc.
+
+### featured.csv
+
+Place a `featured.csv` in the root directory to display featured content on the home page:
+
+```csv
+title,link,image,pastor
+"Summer Series 2024",/2024/Summer,/images/summer.jpg,"Pastor Smith"
+"Christmas Messages",/2023/Christmas,/images/christmas.jpg,"Pastor Jones"
+```
+
+## MP3 ID3 Tags
+
+The archive reads the following ID3 tags from MP3 files:
+
+| Tag | Display |
+|-----|---------|
+| Title | Sermon title (falls back to filename) |
+| Artist | Pastor/Artist column |
+| Comment | Comments column |
+
+Both ID3v1 and ID3v2 tags are supported, with v2 taking precedence.
+
+## Project Structure
+
+```
+sermon-archive/
+  index.php           # Main application entry point
+  functions.php       # Utility functions
+  config.php          # Your local configuration (not in git)
+  config.example.php  # Configuration template
+  Parsedown.php       # Markdown parser library
+  style.css           # Custom styles
+  getid3/             # ID3 tag reading library
+  nginx-config        # Sample Nginx configuration
+  Dockerfile          # Docker image for development
+  docker-compose.yml  # Docker Compose configuration
+```
+
+## Development
+
+### Running Tests Locally
+
+```bash
+# Build and run with Docker
+docker compose up --build
+
+# View at http://localhost:8080
+```
+
+The Docker setup mounts source files as volumes, so changes to PHP files are reflected immediately without rebuilding.
+
+### Code Style
+
+The codebase uses modern PHP 8+ features:
+- Strict types (`declare(strict_types=1)`)
+- Type declarations for parameters and return types
+- Null coalescing operator (`??`)
+- Arrow functions
+- Match expressions
+
+## License
+
+This project includes:
+- [getID3](https://www.getid3.org/) - for reading MP3 metadata
+- [Parsedown](https://parsedown.org/) - for Markdown rendering
+
+## Live Demo
+
+See a live demo at http://archive.spepmedia.com
