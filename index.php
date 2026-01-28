@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 $sdir = '/data/spep/spepmedia.com/';
 
+require_once __DIR__ . '/Parsedown.php';
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/getid3/getid3.php';
 
@@ -44,7 +45,7 @@ $hasFeatured = $dirInfo['hasFeatured'];
 // Prepare readme content if present
 $readmeHtml = '';
 if ($hasReadme) {
-    $readmeHtml = shell_exec('markdown ' . escapeshellarg($sdir . $path . '/readme.md'));
+    $readmeHtml = renderMarkdownFile($sdir . $path . '/readme.md');
 }
 
 // Prepare featured items if on home page

@@ -203,3 +203,22 @@ function getPageTitleFromPath(string $path): string
 
     return $lastToken !== '' ? $lastToken . ' - ' : '';
 }
+
+/**
+ * Render markdown file to HTML using Parsedown.
+ */
+function renderMarkdownFile(string $filePath): string
+{
+    if (!file_exists($filePath)) {
+        return '';
+    }
+
+    static $parsedown = null;
+    if ($parsedown === null) {
+        $parsedown = new Parsedown();
+        $parsedown->setSafeMode(true);
+    }
+
+    $markdown = file_get_contents($filePath);
+    return $parsedown->text($markdown);
+}
