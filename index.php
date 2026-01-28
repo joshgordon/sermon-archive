@@ -103,11 +103,22 @@ for ($i = 0; $i < $itemCount; $i++) {
 // ============================================================================
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
     <title><?= htmlspecialchars($pageTitle . $siteName) ?></title>
+
+    <!-- Color scheme detection (runs before CSS to prevent flash) -->
+    <script>
+        (function() {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const stored = localStorage.getItem('theme');
+            const theme = stored || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
@@ -135,7 +146,13 @@ for ($i = 0; $i < $itemCount; $i++) {
         <!-- Header -->
         <div class="row">
             <div class="col-md-8 offset-md-2">
-                <h1 class="mt-4"><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <h1 class="mb-0"><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="theme-toggle" aria-label="Toggle dark mode">
+                        <i class="bi bi-moon-fill" id="theme-icon-dark"></i>
+                        <i class="bi bi-sun-fill d-none" id="theme-icon-light"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -189,7 +206,7 @@ for ($i = 0; $i < $itemCount; $i++) {
         <div class="row mt-4">
             <div class="col-md-8 offset-md-2">
                 <table class="table table-striped table-hover">
-                    <thead class="table-light">
+                    <thead>
                         <?php if ($allDirs): ?>
                         <tr>
                             <th style="width: 5%"></th>
@@ -241,19 +258,19 @@ for ($i = 0; $i < $itemCount; $i++) {
     </div>
 
     <!-- Footer -->
-    <footer class="footer mt-5 py-3 bg-light">
+    <footer class="footer mt-5 py-3 bg-body-tertiary">
         <div class="container text-center">
-            <span class="text-muted">
+            <span class="text-body-secondary">
                 <?php if ($orgName && $orgUrl): ?>
-                <a href="<?= htmlspecialchars($orgUrl) ?>" class="text-muted text-decoration-none"><?= htmlspecialchars($orgName) ?></a>
+                <a href="<?= htmlspecialchars($orgUrl) ?>" class="text-body-secondary text-decoration-none"><?= htmlspecialchars($orgName) ?></a>
                 <?php elseif ($orgName): ?>
                 <?= htmlspecialchars($orgName) ?>
                 <?php endif; ?>
                 <?php if ($hostingProvider): ?>
-                &middot; Hosted on <a href="<?= htmlspecialchars($hostingProvider['url']) ?>" class="text-muted text-decoration-none"><?= htmlspecialchars($hostingProvider['name']) ?></a>
+                &middot; Hosted on <a href="<?= htmlspecialchars($hostingProvider['url']) ?>" class="text-body-secondary text-decoration-none"><?= htmlspecialchars($hostingProvider['name']) ?></a>
                 <?php endif; ?>
                 <?php if ($validatorDomain): ?>
-                &middot; <a href="https://validator.w3.org/check?uri=<?= htmlspecialchars($validatorDomain) ?><?= cleanURL($path) ?>" class="text-muted text-decoration-none">Valid HTML</a>
+                &middot; <a href="https://validator.w3.org/check?uri=<?= htmlspecialchars($validatorDomain) ?><?= cleanURL($path) ?>" class="text-body-secondary text-decoration-none">Valid HTML</a>
                 <?php endif; ?>
             </span>
         </div>
@@ -261,5 +278,46 @@ for ($i = 0; $i < $itemCount; $i++) {
 
     <!-- Bootstrap 5 JS (optional, only needed for interactive components) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <!-- Theme toggle script -->
+    <script>
+        (function() {
+            const toggle = document.getElementById('theme-toggle');
+            const iconDark = document.getElementById('theme-icon-dark');
+            const iconLight = document.getElementById('theme-icon-light');
+
+            function updateIcons(theme) {
+                if (theme === 'dark') {
+                    iconDark.classList.add('d-none');
+                    iconLight.classList.remove('d-none');
+                } else {
+                    iconDark.classList.remove('d-none');
+                    iconLight.classList.add('d-none');
+                }
+            }
+
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-bs-theme', theme);
+                localStorage.setItem('theme', theme);
+                updateIcons(theme);
+            }
+
+            // Initialize icons based on current theme
+            updateIcons(document.documentElement.getAttribute('data-bs-theme'));
+
+            // Toggle button click handler
+            toggle.addEventListener('click', function() {
+                const current = document.documentElement.getAttribute('data-bs-theme');
+                setTheme(current === 'dark' ? 'light' : 'dark');
+            });
+
+            // Listen for system preference changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+                if (!localStorage.getItem('theme')) {
+                    setTheme(e.matches ? 'dark' : 'light');
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
