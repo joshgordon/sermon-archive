@@ -112,12 +112,12 @@ for ($i = 0; $i < $itemCount; $i++) {
 
     <!-- Color scheme detection (runs before CSS to prevent flash) -->
     <script>
-        (function() {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            const stored = localStorage.getItem('theme');
-            const theme = stored || (prefersDark ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-bs-theme', theme);
-        })();
+        document.documentElement.setAttribute('data-bs-theme',
+            window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        );
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            document.documentElement.setAttribute('data-bs-theme', e.matches ? 'dark' : 'light');
+        });
     </script>
 
     <!-- Bootstrap 5 CSS -->
@@ -146,13 +146,7 @@ for ($i = 0; $i < $itemCount; $i++) {
         <!-- Header -->
         <div class="row">
             <div class="col-md-8 offset-md-2">
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <h1 class="mb-0"><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="theme-toggle" aria-label="Toggle dark mode">
-                        <i class="bi bi-moon-fill" id="theme-icon-dark"></i>
-                        <i class="bi bi-sun-fill d-none" id="theme-icon-light"></i>
-                    </button>
-                </div>
+                <h1 class="mt-4"><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
             </div>
         </div>
 
@@ -278,46 +272,5 @@ for ($i = 0; $i < $itemCount; $i++) {
 
     <!-- Bootstrap 5 JS (optional, only needed for interactive components) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
-    <!-- Theme toggle script -->
-    <script>
-        (function() {
-            const toggle = document.getElementById('theme-toggle');
-            const iconDark = document.getElementById('theme-icon-dark');
-            const iconLight = document.getElementById('theme-icon-light');
-
-            function updateIcons(theme) {
-                if (theme === 'dark') {
-                    iconDark.classList.add('d-none');
-                    iconLight.classList.remove('d-none');
-                } else {
-                    iconDark.classList.remove('d-none');
-                    iconLight.classList.add('d-none');
-                }
-            }
-
-            function setTheme(theme) {
-                document.documentElement.setAttribute('data-bs-theme', theme);
-                localStorage.setItem('theme', theme);
-                updateIcons(theme);
-            }
-
-            // Initialize icons based on current theme
-            updateIcons(document.documentElement.getAttribute('data-bs-theme'));
-
-            // Toggle button click handler
-            toggle.addEventListener('click', function() {
-                const current = document.documentElement.getAttribute('data-bs-theme');
-                setTheme(current === 'dark' ? 'light' : 'dark');
-            });
-
-            // Listen for system preference changes
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-                if (!localStorage.getItem('theme')) {
-                    setTheme(e.matches ? 'dark' : 'light');
-                }
-            });
-        })();
-    </script>
 </body>
 </html>
