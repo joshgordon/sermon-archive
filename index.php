@@ -177,7 +177,7 @@ for ($i = 0; $i < $itemCount; $i++) {
         <div class="row mt-4">
             <div class="col-md-8 offset-md-2">
                 <h3>Featured</h3>
-                <div class="row row-cols-1 row-cols-md-3 g-4">
+                <div class="row row-cols-3 row-cols-md-4 row-cols-lg-6 g-4">
                     <?php foreach ($featuredItems as $feature): ?>
                     <div class="col">
                         <a href="<?= $feature['link'] ?>" class="text-decoration-none">
@@ -199,7 +199,7 @@ for ($i = 0; $i < $itemCount; $i++) {
         <!-- File/Directory Listing -->
         <div class="row mt-4">
             <div class="col-md-8 offset-md-2">
-                <table class="table table-striped table-hover">
+                <table class="table table-striped">
                     <thead>
                         <?php if ($allDirs): ?>
                         <tr>

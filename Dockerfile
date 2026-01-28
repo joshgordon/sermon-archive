@@ -15,6 +15,7 @@ WORKDIR /var/www/html
 # Copy application files
 COPY index.php functions.php Parsedown.php style.css favicon.ico ./
 COPY config.example.php ./config.php
+COPY .htaccess ./.htaccess
 COPY getid3/ ./getid3/
 
 # Create data directory for sermon files
