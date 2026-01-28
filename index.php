@@ -1,99 +1,23 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Sermon Archive - Main Index
  *
- * This file displays a browsable archive of sermons and media files.
+ * Displays a browsable archive of sermons and media files.
  */
 
 // ============================================================================
-// CONFIGURATION
+// CONFIGURATION & DEPENDENCIES
 // ============================================================================
 
-$sdir = "/data/spep/spepmedia.com/";
+$sdir = '/data/spep/spepmedia.com/';
 
-// Uncomment for debugging:
-// ini_set('display_errors', 1);
-// error_reporting(~0);
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/getid3/getid3.php';
 
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Clean and encode a URL path for safe linking.
- */
-function cleanURL($url) {
-    if ($url == "") {
-        return "";
-    }
-    $array = explode('/', $url);
-    $newArray = array();
-    foreach ($array as $value) {
-        if ($value == "") {
-            continue;
-        }
-        $newArray[] = rawurlencode($value);
-    }
-    return "/" . implode('/', $newArray);
-}
-
-/**
- * Check if a string ends with a given suffix.
- * Courtesy of StackOverflow: http://stackoverflow.com/questions/834303/startswith-and-endswith-functions-in-php
- */
-function endsWith($haystack, $needle) {
-    return $needle === "" || strpos($haystack, $needle, strlen($haystack) - strlen($needle)) !== FALSE;
-}
-
-/**
- * Check if a string starts with a given prefix.
- */
-function startsWith($haystack, $needle) {
-    return $needle === "" || strrpos($haystack, $needle, -strlen($haystack)) !== FALSE;
-}
-
-/**
- * Check if an item should be skipped in directory listings.
- */
-function shouldSkipItem($item) {
-    return $item == "."
-        || $item == ".."
-        || $item == "readme.md"
-        || $item == "featured.csv"
-        || endsWith($item, ".jpg")
-        || startsWith($item, ".")
-        || $item == "robots.txt";
-}
-
-/**
- * Get ID3 tag value safely from nested array structure.
- */
-function getID3Tag($info, $version, $tag) {
-    if ($info !== null
-        && isset($info['tags'][$version][$tag])
-        && array_key_exists(0, $info['tags'][$version][$tag])) {
-        return $info['tags'][$version][$tag][0];
-    }
-    return null;
-}
-
-/**
- * Get ID3 tag value, preferring id3v2 over id3v1.
- */
-function getID3TagPreferV2($info, $tag) {
-    $value = getID3Tag($info, 'id3v2', $tag);
-    if ($value === null) {
-        $value = getID3Tag($info, 'id3v1', $tag);
-    }
-    return $value;
-}
-
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-
-require_once('getid3/getid3.php');
-$getID3 = new getID3;
+$getID3 = new getID3();
 
 // ============================================================================
 // DATA PREPARATION
@@ -101,148 +25,65 @@ $getID3 = new getID3;
 
 // Parse the request path
 $path = urldecode($_SERVER['REQUEST_URI']);
-if ($path == "/") {
-    $path = "";
+if ($path === '/') {
+    $path = '';
 }
 
-// Build page title from path
-$pageTitle = "";
-$tokens = explode('/', $path);
-if (count($tokens) > 1) {
-    $pageTitle = $tokens[count($tokens) - 1] . " - ";
-}
+// Build page title and breadcrumbs
+$pageTitle = getPageTitleFromPath($path);
+$breadcrumbHtml = buildBreadcrumbs($path);
 
-// Debug info for HTML comment
-$debugTokens = $tokens;
-$debugTokenCount = count($tokens);
-$debugLastToken = $tokens[count($tokens) - 1];
-
-// Build breadcrumb trail
-$breadcrumbs = array();
-$breadcrumbs[] = '<a href="/">Home</a>';
-$chunks = explode('/', $path);
-foreach ($chunks as $i => $chunk) {
-    if ($chunk == "") {
-        continue;
-    }
-    $breadcrumbs[] = sprintf(
-        '<a href="%s">%s</a>',
-        implode('', array_slice(array_map('cleanURL', $chunks), 0, $i + 1)),
-        $chunk
-    );
-}
-$breadcrumbHtml = implode(' &gt;&gt; ', $breadcrumbs);
-
-// Scan the directory
+// Scan and analyze directory contents
 $items = scandir($sdir . $path);
+$dirInfo = analyzeDirectory($sdir, $path, $items);
 
-// Analyze directory contents
-$allDirs = true;
-$hasReadme = false;
-$hasFeatured = false;
-
-if (count($items) < 6) {
-    $allDirs = false;
-}
-
-foreach ($items as $item) {
-    if ($item == "readme.md") {
-        $hasReadme = true;
-    } else if ($item == "featured.csv") {
-        $hasFeatured = true;
-    } else if ($item == "robots.txt") {
-        continue;
-    } else if (!startsWith($item, ".") && !is_dir($sdir . $path . "/" . $item) && $allDirs) {
-        $allDirs = false;
-    }
-}
+$allDirs = $dirInfo['allDirs'];
+$hasReadme = $dirInfo['hasReadme'];
+$hasFeatured = $dirInfo['hasFeatured'];
 
 // Prepare readme content if present
-$readmeHtml = "";
+$readmeHtml = '';
 if ($hasReadme) {
-    $readmeHtml = shell_exec("markdown " . $sdir . $path . "/readme.md");
+    $readmeHtml = shell_exec('markdown ' . escapeshellarg($sdir . $path . '/readme.md'));
 }
 
 // Prepare featured items if on home page
-$featuredItems = array();
-if ($path == "" && $hasFeatured) {
-    $featuredData = array_map('str_getcsv', file($sdir . "/featured.csv"));
-    foreach ($featuredData as $feature) {
-        if ($feature[0] == "title" || $feature[0] == "") {
-            continue;
-        }
-        $featuredItems[] = array(
-            'title' => htmlspecialchars($feature[0]),
-            'link' => cleanURL($feature[1]),
-            'image' => cleanURL($feature[2]),
-            'pastor' => htmlspecialchars($feature[3])
-        );
-    }
+$featuredItems = [];
+if ($path === '' && $hasFeatured) {
+    $featuredItems = parseFeaturedItems($sdir . '/featured.csv');
 }
 
 // Build the file/directory listing
-$listingRows = array();
-$increment = $allDirs ? 2 : 1;
+$listingRows = [];
+$itemCount = count($items);
 
-for ($i = 0; $i < count($items); $i += $increment) {
+for ($i = 0; $i < $itemCount; $i++) {
     // Skip items that need skipping
-    while ($i < count($items) && shouldSkipItem($items[$i])) {
+    while ($i < $itemCount && shouldSkipItem($items[$i])) {
         $i++;
     }
 
-    if ($i >= count($items)) {
+    if ($i >= $itemCount) {
         break;
     }
 
-    $row = array();
     $currentItem = $items[$i];
-    $isDirectory = is_dir($sdir . $path . "/" . $currentItem);
+    $fullPath = $sdir . $path . '/' . $currentItem;
 
-    if ($isDirectory) {
-        // Directory entry
-        $row['type'] = 'directory';
-        $row['link'] = cleanURL($path) . cleanURL($currentItem);
-        $row['name'] = $currentItem;
-
-        if ($allDirs) {
-            // Find the next valid item for second column
-            $nextIndex = $i + 1;
-            while ($nextIndex < count($items) && shouldSkipItem($items[$nextIndex])) {
-                $nextIndex++;
-            }
-
-            if ($nextIndex < count($items)) {
-                $row['second_link'] = cleanURL($path) . cleanURL($items[$nextIndex]);
-                $row['second_name'] = $items[$nextIndex];
-                // Adjust i to skip items we've processed
-                $i = $nextIndex - 1; // -1 because loop will add $increment
-            } else {
-                $row['second_link'] = null;
-                $row['second_name'] = null;
-            }
-        }
+    if (is_dir($fullPath)) {
+        $listingRows[] = buildDirectoryRow($path, $currentItem, $allDirs, $items, $i);
     } else {
-        // File entry
-        $row['type'] = 'file';
-        $file = $sdir . $path . "/" . $currentItem;
-
-        $info = null;
-        if (pathinfo($file, PATHINFO_EXTENSION) == "mp3") {
-            $info = $getID3->analyze($file);
+        $id3Info = null;
+        if (pathinfo($fullPath, PATHINFO_EXTENSION) === 'mp3') {
+            $id3Info = $getID3->analyze($fullPath);
         }
-
-        $title = getID3TagPreferV2($info, 'title');
-        if ($title === null) {
-            $title = $currentItem;
-        }
-
-        $row['link'] = "/sermons" . cleanURL($path) . cleanURL($currentItem);
-        $row['title'] = htmlspecialchars($title);
-        $row['comment'] = htmlspecialchars(getID3TagPreferV2($info, 'comment') ?? '');
-        $row['artist'] = htmlspecialchars(getID3TagPreferV2($info, 'artist') ?? '');
+        $listingRows[] = buildFileRow($path, $currentItem, $id3Info);
     }
 
-    $listingRows[] = $row;
+    // In allDirs mode, we process two items per iteration
+    if ($allDirs) {
+        $i++;
+    }
 }
 
 // ============================================================================
@@ -254,22 +95,21 @@ for ($i = 0; $i < count($items); $i += $increment) {
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <!-- <?php var_dump($debugTokens); echo $debugTokenCount . $debugLastToken . " - "; ?> -->
-    <title><?php echo $pageTitle; ?> Sermon Archive</title>
+    <title><?= htmlspecialchars($pageTitle) ?> Sermon Archive</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
 
     <!-- jQuery and Bootstrap JS -->
-    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
     <!-- Custom styles -->
     <link rel="stylesheet" href="/style.css" />
 
     <!-- Google Analytics -->
-    <script type="text/javascript">
+    <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -283,14 +123,14 @@ for ($i = 0; $i < count($items); $i += $increment) {
         <!-- Header -->
         <div class="row">
             <div class="col-md-8 col-md-offset-2">
-                <h1><?php echo $pageTitle; ?>SPEP Sermon Archive</h1>
+                <h1><?= htmlspecialchars($pageTitle) ?>SPEP Sermon Archive</h1>
             </div>
         </div>
 
         <!-- Breadcrumb Navigation -->
         <div class="row">
             <div class="col-md-8 col-md-offset-2">
-                <h4><?php echo $breadcrumbHtml; ?></h4>
+                <h4><?= $breadcrumbHtml ?></h4>
             </div>
         </div>
 
@@ -299,23 +139,23 @@ for ($i = 0; $i < count($items); $i += $increment) {
         <div class="row">
             <div class="col-md-6 col-md-offset-3">
                 <div class="well well-sm">
-                    <?php echo $readmeHtml; ?>
+                    <?= $readmeHtml ?>
                 </div>
             </div>
         </div>
         <?php endif; ?>
 
         <!-- Featured Section -->
-        <?php if (!empty($featuredItems)): ?>
+        <?php if ($featuredItems !== []): ?>
         <div class="row">
             <div class="col-md-8 col-md-offset-2">
                 <h3>Featured</h3>
                 <?php foreach ($featuredItems as $feature): ?>
                 <div class="cover">
-                    <a href="<?php echo $feature['link']; ?>">
-                        <img src="<?php echo $feature['image']; ?>" width="100%" height="100%" alt="<?php echo $feature['title']; ?>" />
-                        <span class="info title"><?php echo $feature['title']; ?></span>
-                        <span class="info pastor"><?php echo $feature['pastor']; ?></span>
+                    <a href="<?= $feature['link'] ?>">
+                        <img src="<?= $feature['image'] ?>" width="100%" height="100%" alt="<?= $feature['title'] ?>" />
+                        <span class="info title"><?= $feature['title'] ?></span>
+                        <span class="info pastor"><?= $feature['pastor'] ?></span>
                     </a>
                 </div>
                 <?php endforeach; ?>
@@ -346,14 +186,14 @@ for ($i = 0; $i < count($items); $i += $increment) {
                     </thead>
                     <tbody>
                         <?php foreach ($listingRows as $row): ?>
-                            <?php if ($row['type'] == 'directory'): ?>
+                            <?php if ($row['type'] === 'directory'): ?>
                             <tr>
                                 <td><span class="glyphicon glyphicon-folder-close"></span></td>
-                                <td><a href="<?php echo $row['link']; ?>"><?php echo $row['name']; ?></a></td>
+                                <td><a href="<?= $row['link'] ?>"><?= $row['name'] ?></a></td>
                                 <?php if ($allDirs): ?>
                                     <?php if ($row['second_name'] !== null): ?>
                                     <td><span class="glyphicon glyphicon-folder-close"></span></td>
-                                    <td><a href="<?php echo $row['second_link']; ?>"><?php echo $row['second_name']; ?></a></td>
+                                    <td><a href="<?= $row['second_link'] ?>"><?= $row['second_name'] ?></a></td>
                                     <?php else: ?>
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
@@ -366,9 +206,9 @@ for ($i = 0; $i < count($items); $i += $increment) {
                             <?php else: ?>
                             <tr>
                                 <td><span class="glyphicon glyphicon-play"></span></td>
-                                <td><a href="<?php echo $row['link']; ?>"><?php echo $row['title']; ?></a></td>
-                                <td><?php echo $row['comment']; ?></td>
-                                <td><?php echo $row['artist']; ?></td>
+                                <td><a href="<?= $row['link'] ?>"><?= $row['title'] ?></a></td>
+                                <td><?= $row['comment'] ?></td>
+                                <td><?= $row['artist'] ?></td>
                             </tr>
                             <?php endif; ?>
                         <?php endforeach; ?>
@@ -384,18 +224,9 @@ for ($i = 0; $i < count($items); $i += $increment) {
             <p class="text-muted">
                 <a href="http://spepchurch.org">Severna Park EP Church (PCA)</a> ::
                 Hosted on <a href="https://www.digitalocean.com/?refcode=c0167ae9a50a">DigitalOcean</a> ::
-                <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?php echo cleanURL($path); ?>">Valid XHTML</a>
+                <a href="http://validator.w3.org/check?uri=archive.spepmedia.com<?= cleanURL($path) ?>">Valid XHTML</a>
             </p>
         </div>
     </div>
-
-<!--Debug info goes here
-<?php
-echo $path;
-echo "\n";
-echo cleanURL($path);
-echo "\n";
-?>
-/debug-->
 </body>
 </html>
