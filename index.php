@@ -102,23 +102,21 @@ for ($i = 0; $i < $itemCount; $i++) {
 // HTML TEMPLATE
 // ============================================================================
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($pageTitle . $siteName) ?></title>
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
-    <!-- jQuery and Bootstrap JS -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
     <!-- Custom styles -->
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/style.css">
 
     <?php if ($gaId): ?>
     <!-- Google Analytics -->
@@ -133,27 +131,31 @@ for ($i = 0; $i < $itemCount; $i++) {
     <?php endif; ?>
 </head>
 <body>
-    <div class="content-fluid">
+    <div class="container-fluid">
         <!-- Header -->
         <div class="row">
-            <div class="col-md-8 col-md-offset-2">
-                <h1><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
+            <div class="col-md-8 offset-md-2">
+                <h1 class="mt-4"><?= htmlspecialchars($pageTitle . $siteName) ?></h1>
             </div>
         </div>
 
         <!-- Breadcrumb Navigation -->
         <div class="row">
-            <div class="col-md-8 col-md-offset-2">
-                <h4><?= $breadcrumbHtml ?></h4>
+            <div class="col-md-8 offset-md-2">
+                <nav aria-label="breadcrumb">
+                    <div class="fs-5 text-secondary"><?= $breadcrumbHtml ?></div>
+                </nav>
             </div>
         </div>
 
         <!-- Readme Section -->
         <?php if ($hasReadme): ?>
-        <div class="row">
-            <div class="col-md-6 col-md-offset-3">
-                <div class="well well-sm">
-                    <?= $readmeHtml ?>
+        <div class="row mt-3">
+            <div class="col-md-6 offset-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <?= $readmeHtml ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -161,37 +163,43 @@ for ($i = 0; $i < $itemCount; $i++) {
 
         <!-- Featured Section -->
         <?php if ($featuredItems !== []): ?>
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2">
                 <h3>Featured</h3>
-                <?php foreach ($featuredItems as $feature): ?>
-                <div class="cover">
-                    <a href="<?= $feature['link'] ?>">
-                        <img src="<?= $feature['image'] ?>" width="100%" height="100%" alt="<?= $feature['title'] ?>" />
-                        <span class="info title"><?= $feature['title'] ?></span>
-                        <span class="info pastor"><?= $feature['pastor'] ?></span>
-                    </a>
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    <?php foreach ($featuredItems as $feature): ?>
+                    <div class="col">
+                        <a href="<?= $feature['link'] ?>" class="text-decoration-none">
+                            <div class="card h-100 cover">
+                                <img src="<?= $feature['image'] ?>" class="card-img-top" alt="<?= $feature['title'] ?>">
+                                <div class="card-body">
+                                    <h5 class="card-title"><?= $feature['title'] ?></h5>
+                                    <p class="card-text text-muted"><?= $feature['pastor'] ?></p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
             </div>
         </div>
         <?php endif; ?>
 
         <!-- File/Directory Listing -->
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
-                <table class="table table-striped">
-                    <thead>
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2">
+                <table class="table table-striped table-hover">
+                    <thead class="table-light">
                         <?php if ($allDirs): ?>
                         <tr>
-                            <th class="col-md-1"></th>
-                            <th class="col-md-5">Title</th>
-                            <th class="col-md-1"></th>
-                            <th class="col-md-5">Title</th>
+                            <th style="width: 5%"></th>
+                            <th style="width: 45%">Title</th>
+                            <th style="width: 5%"></th>
+                            <th style="width: 45%">Title</th>
                         </tr>
                         <?php else: ?>
                         <tr>
-                            <th></th>
+                            <th style="width: 5%"></th>
                             <th>Title</th>
                             <th>Comments</th>
                             <th>Pastor/Artist</th>
@@ -202,26 +210,26 @@ for ($i = 0; $i < $itemCount; $i++) {
                         <?php foreach ($listingRows as $row): ?>
                             <?php if ($row['type'] === 'directory'): ?>
                             <tr>
-                                <td><span class="glyphicon glyphicon-folder-close"></span></td>
-                                <td><a href="<?= $row['link'] ?>"><?= $row['name'] ?></a></td>
+                                <td><i class="bi bi-folder-fill text-warning"></i></td>
+                                <td><a href="<?= $row['link'] ?>" class="text-decoration-none"><?= $row['name'] ?></a></td>
                                 <?php if ($allDirs): ?>
                                     <?php if ($row['second_name'] !== null): ?>
-                                    <td><span class="glyphicon glyphicon-folder-close"></span></td>
-                                    <td><a href="<?= $row['second_link'] ?>"><?= $row['second_name'] ?></a></td>
+                                    <td><i class="bi bi-folder-fill text-warning"></i></td>
+                                    <td><a href="<?= $row['second_link'] ?>" class="text-decoration-none"><?= $row['second_name'] ?></a></td>
                                     <?php else: ?>
-                                    <td>&nbsp;</td>
-                                    <td>&nbsp;</td>
+                                    <td></td>
+                                    <td></td>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
+                                <td></td>
+                                <td></td>
                                 <?php endif; ?>
                             </tr>
                             <?php else: ?>
                             <tr>
-                                <td><span class="glyphicon glyphicon-play"></span></td>
-                                <td><a href="<?= $row['link'] ?>"><?= $row['title'] ?></a></td>
-                                <td><?= $row['comment'] ?></td>
+                                <td><i class="bi bi-play-circle-fill text-primary"></i></td>
+                                <td><a href="<?= $row['link'] ?>" class="text-decoration-none"><?= $row['title'] ?></a></td>
+                                <td class="text-muted"><?= $row['comment'] ?></td>
                                 <td><?= $row['artist'] ?></td>
                             </tr>
                             <?php endif; ?>
@@ -233,22 +241,25 @@ for ($i = 0; $i < $itemCount; $i++) {
     </div>
 
     <!-- Footer -->
-    <div class="footer">
-        <div class="container">
-            <p class="text-muted">
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">
                 <?php if ($orgName && $orgUrl): ?>
-                <a href="<?= htmlspecialchars($orgUrl) ?>"><?= htmlspecialchars($orgName) ?></a>
+                <a href="<?= htmlspecialchars($orgUrl) ?>" class="text-muted text-decoration-none"><?= htmlspecialchars($orgName) ?></a>
                 <?php elseif ($orgName): ?>
                 <?= htmlspecialchars($orgName) ?>
                 <?php endif; ?>
                 <?php if ($hostingProvider): ?>
-                :: Hosted on <a href="<?= htmlspecialchars($hostingProvider['url']) ?>"><?= htmlspecialchars($hostingProvider['name']) ?></a>
+                &middot; Hosted on <a href="<?= htmlspecialchars($hostingProvider['url']) ?>" class="text-muted text-decoration-none"><?= htmlspecialchars($hostingProvider['name']) ?></a>
                 <?php endif; ?>
                 <?php if ($validatorDomain): ?>
-                :: <a href="http://validator.w3.org/check?uri=<?= htmlspecialchars($validatorDomain) ?><?= cleanURL($path) ?>">Valid XHTML</a>
+                &middot; <a href="https://validator.w3.org/check?uri=<?= htmlspecialchars($validatorDomain) ?><?= cleanURL($path) ?>" class="text-muted text-decoration-none">Valid HTML</a>
                 <?php endif; ?>
-            </p>
+            </span>
         </div>
-    </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS (optional, only needed for interactive components) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>
